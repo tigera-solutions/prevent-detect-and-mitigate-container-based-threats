@@ -36,19 +36,21 @@ sed -i '' "s/BASE64_KEY/$(base64 < admission_controller_key.pem)/g" workshop/iaa
 kubectl apply -f workshop/iaac
 ```
 
-
-## Vulnerability Management
-
-Deploy the workshop applications.  The java-app deployment should fail.
+Let's deploy the workshop applications.
 
 ```
 kubectl apply -f apps
 ```
 
+The deployment of the java-app will fail because the Admission Controller policy is preventing the deployment of vulnerable workloads.
+
+
+## Vulnerability Management
+
 Our Runtime Security admission controller should prevent running applications with CVSS scores above 7.  These are `critical` vulnerabilities.
 
 
-In order to demonstrate the rest of the capabilities we will have to create an exception and redploy.  Add a vulnerability exception for each CVE and then redeploy.
+Add a vulnerability exception for each CVE and then redeploy.
 
 ```
 kubectl apply -f apps
