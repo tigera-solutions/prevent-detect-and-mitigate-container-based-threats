@@ -12,6 +12,10 @@ docker pull quay.io/jsabo/log4shell-vulnerable-app:latest
 tigera-scanner scan quay.io/jsabo/log4shell-vulnerable-app:latest
 ```
 
+Explore the image scan results in Calico Cloud.
+
+![cc](img/cc-scan-result.png)
+
 Let's integrate the CLI based scanner into our development pipelines using [Github Actions workflows](https://github.com/tigera-solutions/prevent-detect-and-mitigate-container-based-threats/blob/main/.github/workflows/run-tigera-scanner.yaml).
 
 You can see the Tigera container scan results by clicking on the workflow status badge below.
@@ -41,7 +45,10 @@ Deploy the workshop applications.  The java-app deployment should fail.
 kubectl apply -f apps
 ```
 
-Add a vulnerability exception for each CVE and then redeploy.
+Our Runtime Security admission controller should prevent running applications with CVSS scores above 7.  These are `critical` vulnerabilities.
+
+
+In order to demonstrate the rest of the capabilities we will have to create an exception and redploy.  Add a vulnerability exception for each CVE and then redeploy.
 
 ```
 kubectl apply -f apps
