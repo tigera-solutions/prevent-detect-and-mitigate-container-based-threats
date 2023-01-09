@@ -16,9 +16,9 @@ Explore the image scan results in Calico Cloud.
 
 ![cc](img/cc-scan-result.png)
 
-Let's integrate the CLI based scanner into our development pipelines using [Github Actions workflows](https://github.com/tigera-solutions/prevent-detect-and-mitigate-container-based-threats/blob/main/.github/workflows/run-tigera-scanner.yaml).
+The command line interface (CLI) based scanner can easily be integrated into a developer's workflow and continuous integration/continuous delivery (CI/CD) pipelines.  For example, we have integrated the CLI based scanner into our development process using [Github Actions workflows](https://github.com/tigera-solutions/prevent-detect-and-mitigate-container-based-threats/blob/main/.github/workflows/run-tigera-scanner.yaml).
 
-You can see the Tigera container scan results by clicking on the workflow status badge below.
+To view the results of the Tigera container scan, click on the workflow status badge below.
 
 [![Calico Cloud Container Scan Results](https://github.com/tigera-solutions/detect-and-mitigate-container-based-threats/actions/workflows/run-tigera-scanner.yaml/badge.svg)](https://github.com/tigera-solutions/detect-and-mitigate-container-based-threats/actions/workflows/run-tigera-scanner.yaml)
 
