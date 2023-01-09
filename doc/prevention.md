@@ -47,8 +47,7 @@ The deployment of the java-app will fail because the Admission Controller policy
 
 ## Vulnerability Management
 
-Our Runtime Security admission controller should prevent running applications with CVSS scores above 7.  These are `critical` vulnerabilities.
-
+Our Runtime Security admission controller should prevent running applications with CVSS scores above 7.  These are `critical` vulnerabilities.  We want to override the policy that prevents the deployment of the `java-app` due to critical vulnerabilities so that we can access it.
 
 Add a vulnerability exception for each CVE and then redeploy.
 
