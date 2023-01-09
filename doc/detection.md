@@ -6,7 +6,7 @@
 Detect exploitation attempts by evaluating workload traffic against intrusion detection signatures.
 
 ```
-kubectl apply -f dpi
+kubectl apply -f workshop/dpi
 ```
 
 ## Enable eBPF based Container Threat Detection
@@ -27,14 +27,14 @@ Expose reconnaissance gathering and exploitation attempts. Observe data exfiltra
 Enable Application layer visibility and turn it on for our vulnerable `java-app`.
 
 ```
-kubectl apply -f dsg
+kubectl apply -f workshop/dsg
 kubectl annotate svc java-app -n java-app projectcalico.org/l7-logging=true
 ```
 
 Apply Global Alerts to enable signature-based anomaly detection.
 
 ```
-kubectl apply -f alerts
+kubectl apply -f workshop/alerts
 ```
 
 
