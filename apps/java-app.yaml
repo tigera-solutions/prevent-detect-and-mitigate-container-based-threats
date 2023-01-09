@@ -1,0 +1,42 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: java-app
+  namespace: java-app
+  labels:
+    app: java-app
+    tigera.io/address-group: java-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: java-app
+      tigera.io/address-group: java-app
+  template:
+    metadata:
+      labels:
+        app: java-app
+        tigera.io/address-group: java-app
+    spec:
+      containers:
+      - image: quay.io/jsabo/log4shell-vulnerable-app:latest
+        imagePullPolicy: Always
+        name: java-app
+      restartPolicy: Always
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: java-app
+  namespace: java-app
+  labels:
+    service: java-app
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+  selector:
+    app: java-app

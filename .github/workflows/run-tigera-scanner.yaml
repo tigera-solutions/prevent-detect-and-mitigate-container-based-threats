@@ -1,0 +1,27 @@
+name: Calico Cloud Container Scan Results
+
+on:
+  push:
+    branches:
+      - scan
+
+jobs:
+  inspect-image-for-vulnerabilities:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Build Image
+      run: |
+        docker build -t localhost:5000/log4shell-vulnerable-app:latest https://github.com/christophetd/log4shell-vulnerable-app.git#main
+    - name: Install Tigera Scanner
+      run: |
+        curl -Lo tigera-scanner https://installer.calicocloud.io/tigera-scanner/v3.14.1-11/image-assurance-scanner-cli-linux-amd64
+        chmod +x tigera-scanner
+        ./tigera-scanner version
+    - name: Scan Image
+      run: |
+        ./tigera-scanner scan localhost:5000/log4shell-vulnerable-app:latest
+      env:
+        CC_API_URL: ${{ secrets.CC_API_URL }} 
+        CC_TOKEN: ${{ secrets.CC_TOKEN }}
+        CC_WARN_THRESHOLD: 3
+        CC_FAIL_THRESHOLD: 7

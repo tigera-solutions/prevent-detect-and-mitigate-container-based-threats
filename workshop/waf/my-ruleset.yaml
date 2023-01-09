@@ -1,0 +1,3551 @@
+apiVersion: v1
+data:
+  CVE-2021-44228-LOG4J-REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf: |
+    # ------------------------------------------------------------------------
+    # OWASP ModSecurity Core Rule Set ver.3.3.2
+    # Copyright (c) 2006-2020 Trustwave and contributors. All rights reserved.
+    #
+    # The OWASP ModSecurity Core Rule Set is distributed under
+    # Apache Software License (ASL) version 2
+    # Please see the enclosed LICENSE file for full details.
+    # ------------------------------------------------------------------------
+
+    #
+    # The purpose of this file is to hold LOCAL exceptions for your site.  The
+    # types of rules that would go into this file are one where you want to
+    # short-circuit inspection and allow certain transactions to pass through
+    # inspection or if you want to alter rules that are applied.
+    #
+    # This file is named REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf.example for a
+    # very specific reason. Files affixed with the .example extension are designed
+    # to contain user created/modified data. The '.example'. extension should be
+    # renamed to end in .conf. The advantage of this is that when OWASP CRS is
+    # updated, the updates will not overwrite a user generated configuration file.
+    #
+    # As a result of this design paradigm users are encouraged NOT to directly
+    # modify rules. Instead they should use this
+    # REQUEST-900-EXCLUSION-RULES-BEFORE-CRS and the
+    # RESPONSE-999-EXCLUSION-RULES-AFTER-CRS file to modify OWASP rules using
+    # methods similar to the examples specified below.
+    #
+    # REQUEST-900-EXCLUSION-RULES-BEFORE-CRS and
+    # RESPONSE-999-EXCLUSION-RULES-AFTER-CRS serve different purposes. ModSecurity
+    # effectively maintains two different context: startup, and per transaction.
+    # As a rule, directives are processed within the startup context. While they
+    # can affect the per transaction context they generally remain fixed during the
+    # execution of ModSecurity.
+    #
+    # As a result if one wanted to disable a rule at bootup the SecRuleRemoveById
+    # directive or one of its siblings would have to be placed AFTER the rule is
+    # listed, otherwise it will not have knowledge of the rules existence (since
+    # these rules are read in at the same time). This means that when using
+    # directives that effect SecRules, these exceptions should be placed AFTER all
+    # the existing rules. This is why RESPONSE-999-EXCLUSION-RULES-AFTER-CRS is
+    # designed such that it loads LAST.
+    #
+    # Conversely, ModSecurity supports several actions that can change the state of
+    # the underlying configuration during the per transaction context, this is when
+    # rules are being processed. Generally, these are accomplished by using the
+    # 'ctl' action. As these are part of a rule, they will be evaluated in the
+    # order rules are applied (by physical location, considering phases). As a
+    # result of this ordering a 'ctl' action should be placed with consideration to
+    # when it will be executed. This is particularly relevant for the 'ctl' options
+    # that involve modifying ID's (such as ruleRemoveById). In these cases it is
+    # important that such rules are placed BEFORE the rule ID they will affect.
+    # Unlike the setup context, by the time we process rules in the per-transaction
+    # context, we are already aware of all the rule ID's. It is by this logic that
+    # we include rules such as this BEFORE all the remaining rules.  As a result
+    # REQUEST-900-EXCLUSION-RULES-BEFORE-CRS is designed to load FIRST.
+    #
+    # As a general rule:
+    # ctl:ruleEngine            -> place in REQUEST-900-EXCLUSION-RULES-BEFORE-CRS
+    # ctl:ruleRemoveById        -> place in REQUEST-900-EXCLUSION-RULES-BEFORE-CRS
+    # ctl:ruleRemoveByMsg       -> place in REQUEST-900-EXCLUSION-RULES-BEFORE-CRS
+    # ctl:ruleRemoveByTag       -> place in REQUEST-900-EXCLUSION-RULES-BEFORE-CRS
+    # ctl:ruleRemoveTargetById  -> place in REQUEST-900-EXCLUSION-RULES-BEFORE-CRS
+    # ctl:ruleRemoveTargetByMsg -> place in REQUEST-900-EXCLUSION-RULES-BEFORE-CRS
+    # ctl:ruleRemoveTargetByTag -> place in REQUEST-900-EXCLUSION-RULES-BEFORE-CRS
+    #
+    # SecRuleRemoveById         -> place in RESPONSE-999-EXCLUSION-RULES-AFTER-CRS
+    # SecRuleRemoveByMsg        -> place in RESPONSE-999-EXCLUSION-RULES-AFTER-CRS
+    # SecRuleRemoveByTag        -> place in RESPONSE-999-EXCLUSION-RULES-AFTER-CRS
+    # SecRuleUpdateActionById   -> place in RESPONSE-999-EXCLUSION-RULES-AFTER-CRS
+    # SecRuleUpdateTargetById   -> place in RESPONSE-999-EXCLUSION-RULES-AFTER-CRS
+    # SecRuleUpdateTargetByMsg  -> place in RESPONSE-999-EXCLUSION-RULES-AFTER-CRS
+    # SecRuleUpdateTargetByTag  -> place in RESPONSE-999-EXCLUSION-RULES-AFTER-CRS
+    #
+    #
+    # What follows are a group of examples that show you how to perform rule
+    # exclusions.
+    #
+    #
+    # Example Exclusion Rule: Disable inspection for an authorized client
+    #
+    # This ruleset allows you to control how ModSecurity will handle traffic
+    # originating from Authorized Vulnerability Scanning (AVS) sources.  See
+    # related blog post -
+    # http://blog.spiderlabs.com/2010/12/advanced-topic-of-the-week-handling-authorized-scanning-traffic.html
+    #
+    # White-list ASV network block (no blocking or logging of AVS traffic) Update
+    # IP network block as appropriate for your AVS traffic
+    #
+    # ModSec Rule Exclusion: Disable Rule Engine for known ASV IP
+    # SecRule REMOTE_ADDR "@ipMatch 192.168.1.100" \
+    #     "id:1000,\
+    #     phase:1,\
+    #     pass,\
+    #     nolog,\
+    #     ctl:ruleEngine=Off"
+    #
+    #
+    # Example Exclusion Rule: Removing a specific ARGS parameter from inspection
+    #                         for an individual rule
+    #
+    # This rule shows how to conditionally exclude the "password"
+    # parameter for rule 942100 when the REQUEST_URI is /index.php
+    # ModSecurity Rule Exclusion: 942100 SQL Injection Detected via libinjection
+    #
+    # SecRule REQUEST_URI "@beginsWith /index.php" \
+    #     "id:1001,\
+    #     phase:1,\
+    #     pass,\
+    #     nolog,\
+    #     ctl:ruleRemoveTargetById=942100;ARGS:password"
+    #
+    #
+    # Example Exclusion Rule: Removing a specific ARGS parameter from inspection
+    #                         for only certain attacks
+    #
+    # Attack rules within the CRS are tagged, with tags such as 'attack-lfi',
+    # 'attack-sqli', 'attack-xss', 'attack-injection-php', et cetera.
+    #
+    # ModSecurity Rule Exclusion: Disable inspection of ARGS:pwd
+    #                             for all rules tagged attack-sqli
+    # SecRule REQUEST_FILENAME "@endsWith /wp-login.php" \
+    #     "id:1002,\
+    #     phase:2,\
+    #     pass,\
+    #     nolog,\
+    #     ctl:ruleRemoveTargetByTag=attack-sqli;ARGS:pwd"
+    #
+
+    # Example Exclusion Rule: Removing a specific ARGS parameter from inspection
+    #                         for all CRS rules
+    #
+    # This rule illustrates that we can use tagging very effectively to whitelist a
+    # common false positive across an entire ModSecurity instance. This can be done
+    # because every rule in OWASP_CRS is tagged with OWASP_CRS. This will NOT
+    # affect custom rules.
+    #
+    # ModSecurity Rule Exclusion: Disable inspection of ARGS:pwd
+    #                             for all CRS rules
+    # SecRule REQUEST_FILENAME "@endsWith /wp-login.php" \
+    #     "id:1003,\
+    #     phase:2,\
+    #     pass,\
+    #     nolog,\
+    #     ctl:ruleRemoveTargetByTag=OWASP_CRS;ARGS:pwd"
+
+    #
+    # Example Exclusion Rule: Removing a range of rules
+    #
+    # This rule illustrates that we can remove a rule range via a ctl action.
+    # This uses the fact, that rules are grouped by topic in rule files covering
+    # a certain id range.
+    #
+    # ModSecurity Rule Exclusion: Disable all SQLi and XSS rules
+    # SecRule REQUEST_FILENAME "@beginsWith /admin" \
+    #     "id:1004,\
+    #     phase:2,\
+    #     pass,\
+    #     nolog,\
+    #     ctl:ruleRemoveById=941000-942999"
+    #
+    #
+    # The application specific rule exclusion files
+    # REQUEST-903.9001-DRUPAL-EXCLUSION-RULES.conf
+    # REQUEST-903.9002-WORDPRESS-EXCLUSION-RULES.conf
+    # bring additional examples which can be useful then tuning a service.
+
+    # Generic rule against CVE-2021-44228 (Log4j / Log4Shell)
+    # See https://coreruleset.org/20211213/crs-and-log4j-log4shell-cve-2021-44228/
+    SecRule REQUEST_LINE|ARGS|ARGS_NAMES|REQUEST_COOKIES|REQUEST_COOKIES_NAMES|REQUEST_HEADERS|XML://*|XML://@* "@rx (?:\${[^}]{0,4}\${|\${(?:jndi|ctx))" \
+        "id:1005,\
+        phase:2,\
+        deny,\
+        t:none,t:urlDecodeUni,t:cmdline,\
+        log,\
+        msg:'Potential Remote Command Execution: Log4j CVE-2021-44228', \
+        tag:'application-multi',\
+        tag:'language-java',\
+        tag:'platform-multi',\
+        tag:'attack-rce',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/137/6',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/1',\
+        ver:'OWASP_CRS/3.4.0-dev',\
+        severity:'CRITICAL',\
+        multiMatch,\
+        setvar:'tx.rce_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl1=+%{tx.critical_anomaly_score}'"
+  REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf: |
+    # ------------------------------------------------------------------------
+    # OWASP ModSecurity Core Rule Set ver.3.3.2
+    # Copyright (c) 2006-2020 Trustwave and contributors. All rights reserved.
+    #
+    # The OWASP ModSecurity Core Rule Set is distributed under
+    # Apache Software License (ASL) version 2
+    # Please see the enclosed LICENSE file for full details.
+    # ------------------------------------------------------------------------
+
+    #
+    # The purpose of this file is to hold LOCAL exceptions for your site.  The
+    # types of rules that would go into this file are one where you want to
+    # short-circuit inspection and allow certain transactions to pass through
+    # inspection or if you want to alter rules that are applied.
+    #
+    # This file is named REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf.example for a
+    # very specific reason. Files affixed with the .example extension are designed
+    # to contain user created/modified data. The '.example'. extension should be
+    # renamed to end in .conf. The advantage of this is that when OWASP CRS is
+    # updated, the updates will not overwrite a user generated configuration file.
+    #
+    # As a result of this design paradigm users are encouraged NOT to directly
+    # modify rules. Instead they should use this
+    # REQUEST-900-EXCLUSION-RULES-BEFORE-CRS and the
+    # RESPONSE-999-EXCLUSION-RULES-AFTER-CRS file to modify OWASP rules using
+    # methods similar to the examples specified below.
+    #
+    # REQUEST-900-EXCLUSION-RULES-BEFORE-CRS and
+    # RESPONSE-999-EXCLUSION-RULES-AFTER-CRS serve different purposes. ModSecurity
+    # effectively maintains two different context: startup, and per transaction.
+    # As a rule, directives are processed within the startup context. While they
+    # can affect the per transaction context they generally remain fixed during the
+    # execution of ModSecurity.
+    #
+    # As a result if one wanted to disable a rule at bootup the SecRuleRemoveById
+    # directive or one of its siblings would have to be placed AFTER the rule is
+    # listed, otherwise it will not have knowledge of the rules existence (since
+    # these rules are read in at the same time). This means that when using
+    # directives that effect SecRules, these exceptions should be placed AFTER all
+    # the existing rules. This is why RESPONSE-999-EXCLUSION-RULES-AFTER-CRS is
+    # designed such that it loads LAST.
+    #
+    # Conversely, ModSecurity supports several actions that can change the state of
+    # the underlying configuration during the per transaction context, this is when
+    # rules are being processed. Generally, these are accomplished by using the
+    # 'ctl' action. As these are part of a rule, they will be evaluated in the
+    # order rules are applied (by physical location, considering phases). As a
+    # result of this ordering a 'ctl' action should be placed with consideration to
+    # when it will be executed. This is particularly relevant for the 'ctl' options
+    # that involve modifying ID's (such as ruleRemoveById). In these cases it is
+    # important that such rules are placed BEFORE the rule ID they will affect.
+    # Unlike the setup context, by the time we process rules in the per-transaction
+    # context, we are already aware of all the rule ID's. It is by this logic that
+    # we include rules such as this BEFORE all the remaining rules.  As a result
+    # REQUEST-900-EXCLUSION-RULES-BEFORE-CRS is designed to load FIRST.
+    #
+    # As a general rule:
+    # ctl:ruleEngine            -> place in REQUEST-900-EXCLUSION-RULES-BEFORE-CRS
+    # ctl:ruleRemoveById        -> place in REQUEST-900-EXCLUSION-RULES-BEFORE-CRS
+    # ctl:ruleRemoveByMsg       -> place in REQUEST-900-EXCLUSION-RULES-BEFORE-CRS
+    # ctl:ruleRemoveByTag       -> place in REQUEST-900-EXCLUSION-RULES-BEFORE-CRS
+    # ctl:ruleRemoveTargetById  -> place in REQUEST-900-EXCLUSION-RULES-BEFORE-CRS
+    # ctl:ruleRemoveTargetByMsg -> place in REQUEST-900-EXCLUSION-RULES-BEFORE-CRS
+    # ctl:ruleRemoveTargetByTag -> place in REQUEST-900-EXCLUSION-RULES-BEFORE-CRS
+    #
+    # SecRuleRemoveById         -> place in RESPONSE-999-EXCLUSION-RULES-AFTER-CRS
+    # SecRuleRemoveByMsg        -> place in RESPONSE-999-EXCLUSION-RULES-AFTER-CRS
+    # SecRuleRemoveByTag        -> place in RESPONSE-999-EXCLUSION-RULES-AFTER-CRS
+    # SecRuleUpdateActionById   -> place in RESPONSE-999-EXCLUSION-RULES-AFTER-CRS
+    # SecRuleUpdateTargetById   -> place in RESPONSE-999-EXCLUSION-RULES-AFTER-CRS
+    # SecRuleUpdateTargetByMsg  -> place in RESPONSE-999-EXCLUSION-RULES-AFTER-CRS
+    # SecRuleUpdateTargetByTag  -> place in RESPONSE-999-EXCLUSION-RULES-AFTER-CRS
+    #
+    #
+    # What follows are a group of examples that show you how to perform rule
+    # exclusions.
+    #
+    #
+    # Example Exclusion Rule: Disable inspection for an authorized client
+    #
+    # This ruleset allows you to control how ModSecurity will handle traffic
+    # originating from Authorized Vulnerability Scanning (AVS) sources.  See
+    # related blog post -
+    # http://blog.spiderlabs.com/2010/12/advanced-topic-of-the-week-handling-authorized-scanning-traffic.html
+    #
+    # White-list ASV network block (no blocking or logging of AVS traffic) Update
+    # IP network block as appropriate for your AVS traffic
+    #
+    # ModSec Rule Exclusion: Disable Rule Engine for known ASV IP
+    # SecRule REMOTE_ADDR "@ipMatch 192.168.1.100" \
+    #     "id:1000,\
+    #     phase:1,\
+    #     pass,\
+    #     nolog,\
+    #     ctl:ruleEngine=Off"
+    #
+    #
+    # Example Exclusion Rule: Removing a specific ARGS parameter from inspection
+    #                         for an individual rule
+    #
+    # This rule shows how to conditionally exclude the "password"
+    # parameter for rule 942100 when the REQUEST_URI is /index.php
+    # ModSecurity Rule Exclusion: 942100 SQL Injection Detected via libinjection
+    #
+    # SecRule REQUEST_URI "@beginsWith /index.php" \
+    #     "id:1001,\
+    #     phase:1,\
+    #     pass,\
+    #     nolog,\
+    #     ctl:ruleRemoveTargetById=942100;ARGS:password"
+    #
+    #
+    # Example Exclusion Rule: Removing a specific ARGS parameter from inspection
+    #                         for only certain attacks
+    #
+    # Attack rules within the CRS are tagged, with tags such as 'attack-lfi',
+    # 'attack-sqli', 'attack-xss', 'attack-injection-php', et cetera.
+    #
+    # ModSecurity Rule Exclusion: Disable inspection of ARGS:pwd
+    #                             for all rules tagged attack-sqli
+    # SecRule REQUEST_FILENAME "@endsWith /wp-login.php" \
+    #     "id:1002,\
+    #     phase:2,\
+    #     pass,\
+    #     nolog,\
+    #     ctl:ruleRemoveTargetByTag=attack-sqli;ARGS:pwd"
+    #
+
+    # Example Exclusion Rule: Removing a specific ARGS parameter from inspection
+    #                         for all CRS rules
+    #
+    # This rule illustrates that we can use tagging very effectively to whitelist a
+    # common false positive across an entire ModSecurity instance. This can be done
+    # because every rule in OWASP_CRS is tagged with OWASP_CRS. This will NOT
+    # affect custom rules.
+    #
+    # ModSecurity Rule Exclusion: Disable inspection of ARGS:pwd
+    #                             for all CRS rules
+    # SecRule REQUEST_FILENAME "@endsWith /wp-login.php" \
+    #     "id:1003,\
+    #     phase:2,\
+    #     pass,\
+    #     nolog,\
+    #     ctl:ruleRemoveTargetByTag=OWASP_CRS;ARGS:pwd"
+
+    #
+    # Example Exclusion Rule: Removing a range of rules
+    #
+    # This rule illustrates that we can remove a rule range via a ctl action.
+    # This uses the fact, that rules are grouped by topic in rule files covering
+    # a certain id range.
+    #
+    # ModSecurity Rule Exclusion: Disable all SQLi and XSS rules
+    # SecRule REQUEST_FILENAME "@beginsWith /admin" \
+    #     "id:1004,\
+    #     phase:2,\
+    #     pass,\
+    #     nolog,\
+    #     ctl:ruleRemoveById=941000-942999"
+    #
+    #
+    # The application specific rule exclusion files
+    # REQUEST-903.9001-DRUPAL-EXCLUSION-RULES.conf
+    # REQUEST-903.9002-WORDPRESS-EXCLUSION-RULES.conf
+    # bring additional examples which can be useful then tuning a service.
+  REQUEST-901-INITIALIZATION.conf: |
+    # ------------------------------------------------------------------------
+    # OWASP ModSecurity Core Rule Set ver.3.3.2
+    # Copyright (c) 2006-2020 Trustwave and contributors. All rights reserved.
+    #
+    # The OWASP ModSecurity Core Rule Set is distributed under
+    # Apache Software License (ASL) version 2
+    # Please see the enclosed LICENSE file for full details.
+    # ------------------------------------------------------------------------
+
+    #
+    # This file REQUEST-901-INITIALIZATION.conf initializes the Core Rules
+    # and performs preparatory actions. It also fixes errors and omissions
+    # of variable definitions in the file crs-setup.conf.
+    # The setup.conf can and should be edited by the user, this file
+    # is part of the CRS installation and should not be altered.
+    #
+
+
+    #
+    # -=[ Rules Version ]=-
+    #
+    # Rule version data is added to the "Producer" line of Section H of the Audit log:
+    #
+    # - Producer: ModSecurity for Apache/2.9.1 (http://www.modsecurity.org/); OWASP_CRS/3.1.0.
+    #
+    # Ref: https://github.com/SpiderLabs/ModSecurity/wiki/Reference-Manual#wiki-SecComponentSignature
+    #
+    SecComponentSignature "OWASP_CRS/3.3.2"
+
+    #
+    # -=[ Default setup values ]=-
+    #
+    # The CRS checks the tx.crs_setup_version variable to ensure that the setup
+    # file is included at the correct time. This detects situations where
+    # necessary settings are not defined, for instance if the file
+    # inclusion order is incorrect, or if the user has forgotten to
+    # include the crs-setup.conf file.
+    #
+    # If you are upgrading from an earlier version of the CRS and you are
+    # getting this error, please make a new copy of the setup template
+    # crs-setup.conf.example to crs-setup.conf, and re-apply your policy
+    # changes. There have been many changes in settings syntax from CRS2
+    # to CRS3, so an old setup file may cause unwanted behavior.
+    #
+    # If you are not planning to use the crs-setup.conf template, you must
+    # manually set the tx.crs_setup_version variable before including
+    # the CRS rules/* files.
+    #
+    # The variable is a numerical representation of the CRS version number.
+    # E.g., v3.0.0 is represented as 300.
+    #
+
+    SecRule &TX:crs_setup_version "@eq 0" \
+        "id:901001,\
+        phase:1,\
+        deny,\
+        status:500,\
+        log,\
+        auditlog,\
+        msg:'ModSecurity Core Rule Set is deployed without configuration! Please copy the crs-setup.conf.example template to crs-setup.conf, and include the crs-setup.conf file in your webserver configuration before including the CRS rules. See the INSTALL file in the CRS directory for detailed instructions',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL'"
+
+
+    #
+    # -=[ Default setup values ]=-
+    #
+    # Some constructs or individual rules will fail if certain parameters
+    # are not set in the setup.conf file. The following rules will catch
+    # these cases and assign sane default values.
+    #
+
+    # Default Inbound Anomaly Threshold Level (rule 900110 in setup.conf)
+    SecRule &TX:inbound_anomaly_score_threshold "@eq 0" \
+        "id:901100,\
+        phase:1,\
+        pass,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'tx.inbound_anomaly_score_threshold=5'"
+
+    # Default Outbound Anomaly Threshold Level (rule 900110 in setup.conf)
+    SecRule &TX:outbound_anomaly_score_threshold "@eq 0" \
+        "id:901110,\
+        phase:1,\
+        pass,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'tx.outbound_anomaly_score_threshold=4'"
+
+    # Default Paranoia Level (rule 900000 in setup.conf)
+    SecRule &TX:paranoia_level "@eq 0" \
+        "id:901120,\
+        phase:1,\
+        pass,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'tx.paranoia_level=1'"
+
+    # Default Executing Paranoia Level (rule 900000 in setup.conf)
+    SecRule &TX:executing_paranoia_level "@eq 0" \
+        "id:901125,\
+        phase:1,\
+        pass,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'tx.executing_paranoia_level=%{TX.PARANOIA_LEVEL}'"
+
+    # Default Sampling Percentage (rule 900400 in setup.conf)
+    SecRule &TX:sampling_percentage "@eq 0" \
+        "id:901130,\
+        phase:1,\
+        pass,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'tx.sampling_percentage=100'"
+
+    # Default Anomaly Scores (rule 900100 in setup.conf)
+    SecRule &TX:critical_anomaly_score "@eq 0" \
+        "id:901140,\
+        phase:1,\
+        pass,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'tx.critical_anomaly_score=5'"
+
+    SecRule &TX:error_anomaly_score "@eq 0" \
+        "id:901141,\
+        phase:1,\
+        pass,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'tx.error_anomaly_score=4'"
+
+    SecRule &TX:warning_anomaly_score "@eq 0" \
+        "id:901142,\
+        phase:1,\
+        pass,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'tx.warning_anomaly_score=3'"
+
+    SecRule &TX:notice_anomaly_score "@eq 0" \
+        "id:901143,\
+        phase:1,\
+        pass,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'tx.notice_anomaly_score=2'"
+
+    # Default do_reput_block
+    SecRule &TX:do_reput_block "@eq 0" \
+        "id:901150,\
+        phase:1,\
+        pass,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'tx.do_reput_block=0'"
+
+    # Default block duration
+    SecRule &TX:reput_block_duration "@eq 0" \
+        "id:901152,\
+        phase:1,\
+        pass,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'tx.reput_block_duration=300'"
+
+    # Default HTTP policy: allowed_methods (rule 900200)
+    SecRule &TX:allowed_methods "@eq 0" \
+        "id:901160,\
+        phase:1,\
+        pass,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'tx.allowed_methods=GET HEAD POST OPTIONS'"
+
+    # Default HTTP policy: allowed_request_content_type (rule 900220)
+    SecRule &TX:allowed_request_content_type "@eq 0" \
+        "id:901162,\
+        phase:1,\
+        pass,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'tx.allowed_request_content_type=|application/x-www-form-urlencoded| |multipart/form-data| |multipart/related| |text/xml| |application/xml| |application/soap+xml| |application/x-amf| |application/json| |application/cloudevents+json| |application/cloudevents-batch+json| |application/octet-stream| |application/csp-report| |application/xss-auditor-report| |text/plain|'"
+
+    # Default HTTP policy: allowed_request_content_type_charset (rule 900270)
+    SecRule &TX:allowed_request_content_type_charset "@eq 0" \
+        "id:901168,\
+        phase:1,\
+        pass,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'tx.allowed_request_content_type_charset=utf-8|iso-8859-1|iso-8859-15|windows-1252'"
+
+    # Default HTTP policy: allowed_http_versions (rule 900230)
+    SecRule &TX:allowed_http_versions "@eq 0" \
+        "id:901163,\
+        phase:1,\
+        pass,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'tx.allowed_http_versions=HTTP/1.0 HTTP/1.1 HTTP/2 HTTP/2.0'"
+
+    # Default HTTP policy: restricted_extensions (rule 900240)
+    SecRule &TX:restricted_extensions "@eq 0" \
+        "id:901164,\
+        phase:1,\
+        pass,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'tx.restricted_extensions=.asa/ .asax/ .ascx/ .axd/ .backup/ .bak/ .bat/ .cdx/ .cer/ .cfg/ .cmd/ .com/ .config/ .conf/ .cs/ .csproj/ .csr/ .dat/ .db/ .dbf/ .dll/ .dos/ .htr/ .htw/ .ida/ .idc/ .idq/ .inc/ .ini/ .key/ .licx/ .lnk/ .log/ .mdb/ .old/ .pass/ .pdb/ .pol/ .printer/ .pwd/ .rdb/ .resources/ .resx/ .sql/ .swp/ .sys/ .vb/ .vbs/ .vbproj/ .vsdisco/ .webinfo/ .xsd/ .xsx/'"
+
+    # Default HTTP policy: restricted_headers (rule 900250)
+    SecRule &TX:restricted_headers "@eq 0" \
+        "id:901165,\
+        phase:1,\
+        pass,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'tx.restricted_headers=/proxy/ /lock-token/ /content-range/ /if/'"
+
+    # Default HTTP policy: static_extensions (rule 900260)
+    SecRule &TX:static_extensions "@eq 0" \
+        "id:901166,\
+        phase:1,\
+        pass,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'tx.static_extensions=/.jpg/ /.jpeg/ /.png/ /.gif/ /.js/ /.css/ /.ico/ /.svg/ /.webp/'"
+
+    # Default enforcing of body processor URLENCODED
+    SecRule &TX:enforce_bodyproc_urlencoded "@eq 0" \
+        "id:901167,\
+        phase:1,\
+        pass,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'tx.enforce_bodyproc_urlencoded=0'"
+
+    #
+    # -=[ Initialize internal variables ]=-
+    #
+
+    # Initialize anomaly scoring variables.
+    # All _score variables start at 0, and are incremented by the various rules
+    # upon detection of a possible attack.
+    # sql_error_match is used for shortcutting rules for performance reasons.
+
+    SecAction \
+        "id:901200,\
+        phase:1,\
+        pass,\
+        t:none,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'tx.anomaly_score=0',\
+        setvar:'tx.anomaly_score_pl1=0',\
+        setvar:'tx.anomaly_score_pl2=0',\
+        setvar:'tx.anomaly_score_pl3=0',\
+        setvar:'tx.anomaly_score_pl4=0',\
+        setvar:'tx.sql_injection_score=0',\
+        setvar:'tx.xss_score=0',\
+        setvar:'tx.rfi_score=0',\
+        setvar:'tx.lfi_score=0',\
+        setvar:'tx.rce_score=0',\
+        setvar:'tx.php_injection_score=0',\
+        setvar:'tx.http_violation_score=0',\
+        setvar:'tx.session_fixation_score=0',\
+        setvar:'tx.inbound_anomaly_score=0',\
+        setvar:'tx.outbound_anomaly_score=0',\
+        setvar:'tx.outbound_anomaly_score_pl1=0',\
+        setvar:'tx.outbound_anomaly_score_pl2=0',\
+        setvar:'tx.outbound_anomaly_score_pl3=0',\
+        setvar:'tx.outbound_anomaly_score_pl4=0',\
+        setvar:'tx.sql_error_match=0'"
+
+
+    #
+    # -=[ Initialize collections ]=-
+    #
+    # Create both Global and IP collections for rules to use.
+    # There are some CRS rules that assume that these two collections
+    # have already been initiated.
+    #
+
+    SecRule REQUEST_HEADERS:User-Agent "@rx ^.*$" \
+        "id:901318,\
+        phase:1,\
+        pass,\
+        t:none,t:sha1,t:hexEncode,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'tx.ua_hash=%{MATCHED_VAR}'"
+
+    SecAction \
+        "id:901321,\
+        phase:1,\
+        pass,\
+        t:none,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        initcol:global=global,\
+        initcol:ip=%{remote_addr}_%{tx.ua_hash},\
+        setvar:'tx.real_ip=%{remote_addr}'"
+
+    #
+    # -=[ Initialize Correct Body Processing ]=-
+    #
+    # Force request body variable and optionally request body processor
+    #
+
+    # Force body variable
+    SecRule REQBODY_PROCESSOR "!@rx (?:URLENCODED|MULTIPART|XML|JSON)" \
+        "id:901340,\
+        phase:1,\
+        pass,\
+        nolog,\
+        noauditlog,\
+        msg:'Enabling body inspection',\
+        tag:'paranoia-level/1',\
+        ctl:forceRequestBodyVariable=On,\
+        ver:'OWASP_CRS/3.3.2'"
+
+    # Force body processor URLENCODED
+    SecRule TX:enforce_bodyproc_urlencoded "@eq 1" \
+        "id:901350,\
+        phase:1,\
+        pass,\
+        t:none,t:urlDecodeUni,\
+        nolog,\
+        noauditlog,\
+        msg:'Enabling forced body inspection for ASCII content',\
+        ver:'OWASP_CRS/3.3.2',\
+        chain"
+        SecRule REQBODY_PROCESSOR "!@rx (?:URLENCODED|MULTIPART|XML|JSON)" \
+            "ctl:requestBodyProcessor=URLENCODED"
+
+
+    #
+    # -=[ Easing In / Sampling Percentage ]=-
+    #
+    # This is used to send only a limited percentage of requests into the Core
+    # Rule Set. The selection is based on TX.sampling_percentage and a pseudo
+    # random number calculated below.
+    #
+    # Use this to ease into a new Core Rules installation with an existing
+    # productive service.
+    #
+    # See
+    # https://www.netnea.com/cms/2016/04/26/easing-in-conditional-modsecurity-rule-execution-based-on-pseudo-random-numbers/
+    #
+
+    #
+    # Generate the pseudo random number
+    #
+    # ATTENTION: This is no cryptographically secure random number. It's just
+    # a cheap way to get some random number suitable for sampling.
+    #
+    # We take the entropy contained in the UNIQUE_ID. We hash that variable and
+    # take the first integer numbers out of it. Theoretically, it is possible
+    # there are no integers in a sha1 hash. We make sure we get two
+    # integer numbers by taking the last two digits from the DURATION counter
+    # (in microseconds).
+    # Finally, leading zeros are removed from the two-digit random number.
+    #
+
+    SecRule TX:sampling_percentage "@eq 100" \
+        "id:901400,\
+        phase:1,\
+        pass,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        skipAfter:END-SAMPLING"
+
+    SecRule UNIQUE_ID "@rx ^." \
+        "id:901410,\
+        phase:1,\
+        pass,\
+        t:sha1,t:hexEncode,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'TX.sampling_rnd100=%{MATCHED_VAR}'"
+
+    SecRule DURATION "@rx (..)$" \
+        "id:901420,\
+        phase:1,\
+        pass,\
+        capture,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'TX.sampling_rnd100=%{TX.sampling_rnd100}%{TX.1}'"
+
+    SecRule TX:sampling_rnd100 "@rx ^[a-f]*([0-9])[a-f]*([0-9])" \
+        "id:901430,\
+        phase:1,\
+        pass,\
+        capture,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'TX.sampling_rnd100=%{TX.1}%{TX.2}'"
+
+    SecRule TX:sampling_rnd100 "@rx ^0([0-9])" \
+        "id:901440,\
+        phase:1,\
+        pass,\
+        capture,\
+        nolog,\
+        ver:'OWASP_CRS/3.3.2',\
+        setvar:'TX.sampling_rnd100=%{TX.1}'"
+
+
+    #
+    # Sampling decision
+    #
+    # If a request is allowed to pass without being checked by the CRS, there is no
+    # entry in the audit log (for performance reasons), but an error log entry is
+    # being written.  If you want to disable the error log entry, then issue the
+    # following directive somewhere after the inclusion of the CRS
+    # (E.g., RESPONSE-999-EXCEPTIONS.conf).
+    #
+    # SecRuleUpdateActionById 901450 "nolog"
+    #
+
+
+    SecRule TX:sampling_rnd100 "!@lt %{tx.sampling_percentage}" \
+        "id:901450,\
+        phase:1,\
+        pass,\
+        log,\
+        noauditlog,\
+        msg:'Sampling: Disable the rule engine based on sampling_percentage %{TX.sampling_percentage} and random number %{TX.sampling_rnd100}',\
+        ctl:ruleEngine=Off,\
+        ver:'OWASP_CRS/3.3.2'"
+
+    SecMarker "END-SAMPLING"
+
+
+    #
+    # Configuration Plausibility Checks
+    #
+
+    # Make sure executing paranoia level is not lower than paranoia level
+    SecRule TX:executing_paranoia_level "@lt %{tx.paranoia_level}" \
+        "id:901500,\
+        phase:1,\
+        deny,\
+        status:500,\
+        t:none,\
+        log,\
+        msg:'Executing paranoia level configured is lower than the paranoia level itself. This is illegal. Blocking request. Aborting',\
+        ver:'OWASP_CRS/3.3.2'"
+  REQUEST-942-APPLICATION-ATTACK-SQLI.conf: |
+    # ------------------------------------------------------------------------
+    # OWASP ModSecurity Core Rule Set ver.3.3.2
+    # Copyright (c) 2006-2020 Trustwave and contributors. All rights reserved.
+    #
+    # The OWASP ModSecurity Core Rule Set is distributed under
+    # Apache Software License (ASL) version 2
+    # Please see the enclosed LICENSE file for full details.
+    # ------------------------------------------------------------------------
+
+    #
+    # -= Paranoia Level 0 (empty) =- (apply unconditionally)
+    #
+
+
+
+    SecRule TX:EXECUTING_PARANOIA_LEVEL "@lt 1" "id:942011,phase:1,pass,nolog,skipAfter:END-REQUEST-942-APPLICATION-ATTACK-SQLI"
+    SecRule TX:EXECUTING_PARANOIA_LEVEL "@lt 1" "id:942012,phase:2,pass,nolog,skipAfter:END-REQUEST-942-APPLICATION-ATTACK-SQLI"
+    #
+    # -= Paranoia Level 1 (default) =- (apply only when tx.executing_paranoia_level is sufficiently high: 1 or higher)
+    #
+
+    #
+    # References:
+    #
+    # SQL Injection Knowledgebase (via @LightOS) -
+    # http://websec.ca/kb/sql_injection
+    #
+    # SQLi Filter Evasion Cheat Sheet -
+    # http://websec.wordpress.com/2010/12/04/sqli-filter-evasion-cheat-sheet-mysql/
+    #
+    # SQL Injection Cheat Sheet -
+    # http://ferruh.mavituna.com/sql-injection-cheatsheet-oku/
+    #
+    # SQLMap's Tamper Scripts (for evasions)
+    # https://svn.sqlmap.org/sqlmap/trunk/sqlmap/tamper/
+    #
+
+    #
+    # -=[ LibInjection Check ]=-
+    #
+    # There is a stricter sibling of this rule at 941101. It covers REQUEST_BASENAME.
+    #
+    # Ref: https://libinjection.client9.com/
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|REQUEST_HEADERS:User-Agent|REQUEST_HEADERS:Referer|ARGS_NAMES|ARGS|XML:/* "@detectSQLi" \
+        "id:942100,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:utf8toUnicode,t:urlDecodeUni,t:removeNulls,\
+        msg:'SQL Injection Attack Detected via libinjection',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'paranoia-level/1',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        multiMatch,\
+        setvar:'tx.anomaly_score_pl1=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}'"
+
+
+    #
+    # -=[ Detect DB Names ]=-
+    #
+    # Regexp generated from util/regexp-assemble/regexp-942140.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942140.data
+    # Note that after assemble an outer bracket with an ignore case flag and a word boundary is added
+    # to the Regexp::Assemble output:
+    #   Add ignore case flag and word boundary: "(?i:\bASSEMBLE_OUTPUT)"
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:\b(?:(?:m(?:s(?:ys(?:ac(?:cess(?:objects|storage|xml)|es)|(?:relationship|object|querie)s|modules2?)|db)|aster\.\.sysdatabases|ysql\.db)|pg_(?:catalog|toast)|information_schema|northwind|tempdb)\b|s(?:(?:ys(?:\.database_name|aux)|qlite(?:_temp)?_master)\b|chema(?:_name\b|\W*\())|d(?:atabas|b_nam)e\W*\())" \
+        "id:942140,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'SQL Injection Attack: Common DB Names Detected',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'paranoia-level/1',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        ctl:auditLogParts=+E,\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl1=+%{tx.critical_anomaly_score}'"
+
+
+    #
+    # -=[ PHPIDS - Converted SQLI Filters ]=-
+    #
+    # https://raw.github.com/PHPIDS/PHPIDS/master/lib/IDS/default_filter.xml
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:sleep\(\s*?\d*?\s*?\)|benchmark\(.*?\,.*?\))" \
+        "id:942160,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Detects blind sqli tests using sleep() or benchmark()',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'paranoia-level/1',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl1=+%{tx.critical_anomaly_score}'"
+
+    # Regexp generated from util/regexp-assemble/regexp-942170.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942170.data
+    # Note that after assemble an outer bracket with an ignore case flag is added
+    # to the Regexp::Assemble output:
+    #   (?i:ASSEMBLE_OUTPUT)
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:(?:select|;)\s+(?:benchmark|sleep|if)\s*?\(\s*?\(?\s*?\w+)" \
+        "id:942170,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Detects SQL benchmark and sleep injection attempts including conditional queries',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'paranoia-level/1',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl1=+%{tx.critical_anomaly_score}'"
+
+    # Regexp generated from util/regexp-assemble/regexp-942190.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942190.data
+    # Note that after assemble an outer bracket with an ignore case flag is added
+    # to the Regexp::Assemble output:
+    #   (?i:ASSEMBLE_OUTPUT)
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:(?:[\"'`](?:;?\s*?(?:having|select|union)\b\s*?[^\s]|\s*?!\s*?[\"'`\w])|(?:c(?:onnection_id|urrent_user)|database)\s*?\([^\)]*?|u(?:nion(?:[\w(\s]*?select| select @)|ser\s*?\([^\)]*?)|s(?:chema\s*?\([^\)]*?|elect.*?\w?user\()|into[\s+]+(?:dump|out)file\s*?[\"'`]|\s*?exec(?:ute)?.*?\Wxp_cmdshell|from\W+information_schema\W|exec(?:ute)?\s+master\.|\wiif\s*?\())" \
+        "id:942190,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Detects MSSQL code execution and information gathering attempts',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'paranoia-level/1',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl1=+%{tx.critical_anomaly_score}'"
+
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx ^(?i:-0000023456|4294967295|4294967296|2147483648|2147483647|0000012345|-2147483648|-2147483649|0000023456|3.0.00738585072007e-308|1e309)$" \
+        "id:942220,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Looking for integer overflow attacks, these are taken from skipfish, except 3.0.00738585072007e-308 is the \"magic number\" crash',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'paranoia-level/1',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl1=+%{tx.critical_anomaly_score}'"
+
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:[\s()]case\s*?\(|\)\s*?like\s*?\(|having\s*?[^\s]+\s*?[^\w\s]|if\s?\([\d\w]\s*?[=<>~])" \
+        "id:942230,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Detects conditional SQL injection attempts',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'paranoia-level/1',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl1=+%{tx.critical_anomaly_score}'"
+
+    # Regexp generated from util/regexp-assemble/regexp-942240.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942240.data
+    # Note that after assemble an outer bracket with an ignore case flag is added
+    # to the Regexp::Assemble output:
+    #   (?i:ASSEMBLE_OUTPUT)
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:(?:[\"'`](?:;*?\s*?waitfor\s+(?:delay|time)\s+[\"'`]|;.*?:\s*?goto)|alter\s*?\w+.*?cha(?:racte)?r\s+set\s+\w+))" \
+        "id:942240,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Detects MySQL charset switch and MSSQL DoS attempts',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'paranoia-level/1',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl1=+%{tx.critical_anomaly_score}'"
+
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:merge.*?using\s*?\(|execute\s*?immediate\s*?[\"'`]|match\s*?[\w(),+-]+\s*?against\s*?\()" \
+        "id:942250,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Detects MATCH AGAINST, MERGE and EXECUTE IMMEDIATE injections',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'paranoia-level/1',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl1=+%{tx.critical_anomaly_score}'"
+
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i)union.*?select.*?from" \
+        "id:942270,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Looking for basic sql injection. Common attack string for mysql, oracle and others',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'paranoia-level/1',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl1=+%{tx.critical_anomaly_score}'"
+
+    # Regexp generated from util/regexp-assemble/regexp-942280.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942280.data
+    # Note that after assemble an outer bracket with an ignore case flag is added
+    # to the Regexp::Assemble output:
+    #   (?i:ASSEMBLE_OUTPUT)
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:(?:;\s*?shutdown\s*?(?:[#;]|\/\*|--|\{)|waitfor\s*?delay\s?[\"'`]+\s?\d|select\s*?pg_sleep))" \
+        "id:942280,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Detects Postgres pg_sleep injection, waitfor delay attacks and database shutdown attempts',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'paranoia-level/1',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl1=+%{tx.critical_anomaly_score}'"
+
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:(?:\[\$(?:ne|eq|lte?|gte?|n?in|mod|all|size|exists|type|slice|x?or|div|like|between|and)\]))" \
+        "id:942290,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Finds basic MongoDB SQL injection attempts',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'paranoia-level/1',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl1=+%{tx.critical_anomaly_score}'"
+
+    # Regexp generated from util/regexp-assemble/regexp-942320.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942320.data
+    # Note that after assemble an outer bracket with an ignore case flag is added
+    # to the Regexp::Assemble output:
+    #   (?i:ASSEMBLE_OUTPUT)
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:(?:create\s+(?:procedure|function)\s*?\w+\s*?\(\s*?\)\s*?-|;\s*?(?:declare|open)\s+[\w-]+|procedure\s+analyse\s*?\(|declare[^\w]+[@#]\s*?\w+|exec\s*?\(\s*?\@))" \
+        "id:942320,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Detects MySQL and PostgreSQL stored procedure/function injections',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'paranoia-level/1',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl1=+%{tx.critical_anomaly_score}'"
+
+    # Regexp generated from util/regexp-assemble/regexp-942350.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942350.data
+    # Note that after assemble an outer bracket with an ignore case flag is added
+    # to the Regexp::Assemble output:
+    #   (?i:ASSEMBLE_OUTPUT)
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:(?:;\s*?(?:(?:(?:trunc|cre|upd)at|renam)e|(?:inser|selec)t|de(?:lete|sc)|alter|load)\b\s*?[\[(]?\w{2,}|create\s+function\s+.+\s+returns))" \
+        "id:942350,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Detects MySQL UDF injection and other data/structure manipulation attempts',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'paranoia-level/1',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl1=+%{tx.critical_anomaly_score}'"
+
+    # This rule has a stricter sibling: 942361.
+    # The keywords 'alter' and 'union' led to false positives.
+    # Therefore they have been moved to PL2 and the keywords have been extended on PL1.
+    #
+    # Sources for SQL ALTER statements:
+    # MySQL: https://dev.mysql.com/doc/refman/5.7/en/sql-syntax-data-definition.html
+    # Oracle/PLSQL: https://docs.oracle.com/apps/search/search.jsp?q=alter&size=60&category=database
+    # PostgreQSL: https://www.postgresql.org/search/?u=%2Fdocs&q=alter
+    # MSSQL: https://docs.microsoft.com/en-us/sql/t-sql/statements/statements
+    # DB2: https://www.ibm.com/support/knowledgecenter/en/search/alter?scope=SSEPGG_9.5.0
+    #
+    # Regexp generated from util/regexp-assemble/regexp-942360.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942360.data
+    # Note that after assemble an outer bracket with an ignore case flag is added
+    # to the Regexp::Assemble output:
+    #   (?i:ASSEMBLE_OUTPUT)
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:(?:^[\W\d]+\s*?(?:(?:alter\s*(?:a(?:(?:pplication\s*rol|ggregat)e|s(?:ymmetric\s*ke|sembl)y|u(?:thorization|dit)|vailability\s*group)|c(?:r(?:yptographic\s*provider|edential)|o(?:l(?:latio|um)|nversio)n|ertificate|luster)|s(?:e(?:rv(?:ice|er)|curity|quence|ssion|arch)|y(?:mmetric\s*key|nonym)|togroup|chema)|m(?:a(?:s(?:ter\s*key|k)|terialized)|e(?:ssage\s*type|thod)|odule)|l(?:o(?:g(?:file\s*group|in)|ckdown)|a(?:ngua|r)ge|ibrary)|t(?:(?:abl(?:espac)?|yp)e|r(?:igger|usted)|hreshold|ext)|p(?:a(?:rtition|ckage)|ro(?:cedur|fil)e|ermission)|d(?:i(?:mension|skgroup)|atabase|efault|omain)|r(?:o(?:l(?:lback|e)|ute)|e(?:sourc|mot)e)|f(?:u(?:lltext|nction)|lashback|oreign)|e(?:xte(?:nsion|rnal)|(?:ndpoi|ve)nt)|in(?:dex(?:type)?|memory|stance)|b(?:roker\s*priority|ufferpool)|x(?:ml\s*schema|srobject)|w(?:ork(?:load)?|rapper)|hi(?:erarchy|stogram)|o(?:perator|utline)|(?:nicknam|queu)e|us(?:age|er)|group|java|view)|u(?:nion\s*(?:(?:distin|sele)ct|all)|pdate)|(?:truncat|renam)e|(?:inser|selec)t|de(?:lete|sc)|load)\b|create\s+\w+)|(?:(?:(?:trunc|cre|upd)at|renam)e|(?:inser|selec)t|de(?:lete|sc)|alter|load)\s+(?:group_concat|load_file|char)\s?\(?|[\d\W]\s+as\b\s*[\"'`\w]+\s*\bfrom|[\s(]load_file\s*?\(|[\"'`]\s+regexp\W|end\s*?\);))" \
+        "id:942360,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Detects concatenated basic SQL injection and SQLLFI attempts',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'paranoia-level/1',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl1=+%{tx.critical_anomaly_score}'"
+
+    #
+    # -=[ Detect MySQL in-line comments ]=-
+    #
+    # MySQL in-line comments can be used to bypass SQLi detection.
+    #
+    # Ref: https://dev.mysql.com/doc/refman/8.0/en/comments.html:
+    # SELECT /*! STRAIGHT_JOIN */ col1 FROM table1,table2 WHERE ...
+    # CREATE TABLE t1(a INT, KEY (a)) /*!50110 KEY_BLOCK_SIZE=1024 */;
+    # SELECT /*+ BKA(t1) */ FROM ... ;
+    #
+    # http://localhost/test.php?id=9999+or+{if+length((/*!5000select+username/*!50000from*/user+where+id=1))>0}
+    #
+    # The minimal string that triggers this regexp is: /*!*/ or /*+*/.
+    # The rule 942500 is related to 942440 which catches both /*! and */ independently.
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:/\*[!+](?:[\w\s=_\-()]+)?\*/)" \
+        "id:942500,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'MySQL in-line comment detected',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'paranoia-level/1',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl1=+%{tx.critical_anomaly_score}'"
+
+
+    SecRule TX:EXECUTING_PARANOIA_LEVEL "@lt 2" "id:942013,phase:1,pass,nolog,skipAfter:END-REQUEST-942-APPLICATION-ATTACK-SQLI"
+    SecRule TX:EXECUTING_PARANOIA_LEVEL "@lt 2" "id:942014,phase:2,pass,nolog,skipAfter:END-REQUEST-942-APPLICATION-ATTACK-SQLI"
+    #
+    # -= Paranoia Level 2 =- (apply only when tx.executing_paranoia_level is sufficiently high: 2 or higher)
+    #
+
+
+    #
+    # -=[ String Termination/Statement Ending Injection Testing ]=-
+    #
+    # Identifies common initial SQLi probing requests where attackers insert/append
+    # quote characters to the existing normal payload to see how the app/db responds.
+    #
+    # This rule is also triggered by the following exploit(s):
+    # [ SAP CRM Java vulnerability CVE-2018-2380 - Exploit tested: https://www.exploit-db.com/exploits/44292 ]
+    #
+    SecRule ARGS_NAMES|ARGS|XML:/* "@rx (?:^\s*[\"'`;]+|[\"'`]+\s*$)" \
+        "id:942110,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:utf8toUnicode,t:urlDecodeUni,\
+        msg:'SQL Injection Attack: Common Injection Testing Detected',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'WARNING',\
+        setvar:'tx.sql_injection_score=+%{tx.warning_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl2=+%{tx.warning_anomaly_score}'"
+
+
+    #
+    # -=[ SQL Operators ]=-
+    #
+    # This rule is also triggered by the following exploit(s):
+    # [ SAP CRM Java vulnerability CVE-2018-2380 - Exploit tested: https://www.exploit-db.com/exploits/44292 ]
+    #
+    # Regexp generated from util/regexp-assemble/regexp-942120.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942120.data
+    # Note that after assemble an outer bracket with an ignore case flag is added
+    # to the Regexp::Assemble output:
+    #   (?i:ASSEMBLE_OUTPUT)
+    #
+    SecRule ARGS_NAMES|ARGS|XML:/* "@rx (?i:(?:(?:^|\W)in[+\s]*\([\s\d\"]+[^()]*\)|\b(?:r(?:egexp|like)|isnull|xor)\b|<(?:>(?:\s+binary)?|=>?|<)|r(?:egexp|like)\s+binary|not\s+between\s+0\s+and|(?:like|is)\s+null|>[=>]|\|\||!=|&&))" \
+        "id:942120,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:utf8toUnicode,t:urlDecodeUni,\
+        msg:'SQL Injection Attack: SQL Operator Detected',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl2=+%{tx.critical_anomaly_score}'"
+
+
+    #
+    # -=[ SQL Tautologies ]=-
+    #
+    # Regexp generated from util/regexp-assemble/regexp-942130.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942130.data
+    # Note that after assemble an outer bracket with an ignore case flag is added
+    # to the Regexp::Assemble output:
+    #   (?i:ASSEMBLE_OUTPUT)
+    #
+    # Not supported by re2 (backreferences, lookaheads).
+    #
+    SecRule ARGS_NAMES|ARGS|XML:/* "@rx (?i:[\s'\"`()]*?\b([\d\w]+)\b[\s'\"`()]*?(?:<(?:=(?:[\s'\"`()]*?(?!\b\1\b)[\d\w]+|>[\s'\"`()]*?(?:\b\1\b))|>?[\s'\"`()]*?(?!\b\1\b)[\d\w]+)|(?:not\s+(?:regexp|like)|is\s+not|>=?|!=|\^)[\s'\"`()]*?(?!\b\1\b)[\d\w]+|(?:(?:sounds\s+)?like|r(?:egexp|like)|=)[\s'\"`()]*?(?:\b\1\b)))" \
+        "id:942130,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,t:replaceComments,\
+        msg:'SQL Injection Attack: SQL Tautology Detected',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        multiMatch,\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl2=+%{tx.critical_anomaly_score}'"
+
+
+    #
+    # -=[ SQL Function Names ]=-
+    #
+    # This rule is also triggered by the following exploit(s):
+    # [ SAP CRM Java vulnerability CVE-2018-2380 - Exploit tested: https://www.exploit-db.com/exploits/44292 ]
+    #
+    # Regexp generated from util/regexp-assemble/regexp-942150.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942150.data
+    # Note that after assemble an ignore case flag and a word boundary is added
+    # in front of the Regexp::Assemble output.
+    # And a non-word character and an opening bracket is added behind the Regexp::Assemble output:
+    #   (?i)\bASSEMBLE_OUTPUT\W*\(
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i)\b(?:c(?:o(?:n(?:v(?:ert(?:_tz)?)?|cat(?:_ws)?|nection_id)|(?:mpres)?s|ercibility|(?:un)?t|llation|alesce)|ur(?:rent_(?:time(?:stamp)?|date|user)|(?:dat|tim)e)|h(?:ar(?:(?:acter)?_length|set)?|r)|iel(?:ing)?|ast|r32)|s(?:u(?:b(?:str(?:ing(?:_index)?)?|(?:dat|tim)e)|m)|t(?:d(?:dev_(?:sam|po)p)?|r(?:_to_date|cmp))|e(?:c(?:_to_time|ond)|ssion_user)|ys(?:tem_user|date)|ha[12]?|oundex|chema|ig?n|leep|pace|qrt)|i(?:s(?:_(?:ipv(?:4(?:_(?:compat|mapped))?|6)|n(?:ot(?:_null)?|ull)|(?:free|used)_lock)|null)|n(?:et(?:6_(?:aton|ntoa)|_(?:aton|ntoa))|s(?:ert|tr)|terval)?|f(?:null)?)|d(?:a(?:t(?:e(?:_(?:format|add|sub)|diff)?|abase)|y(?:of(?:month|week|year)|name)?)|e(?:(?:s_(?:de|en)cryp|faul)t|grees|code)|count|ump)|l(?:o(?:ca(?:l(?:timestamp)?|te)|g(?:10|2)?|ad_file|wer)|ast(?:_(?:inser_id|day))?|e(?:(?:as|f)t|ngth)|case|trim|pad|n)|u(?:n(?:compress(?:ed_length)?|ix_timestamp|hex)|tc_(?:time(?:stamp)?|date)|p(?:datexml|per)|uid(?:_short)?|case|ser)|t(?:ime(?:_(?:format|to_sec)|stamp(?:diff|add)?|diff)?|o(?:(?:second|day)s|_base64|n?char)|r(?:uncate|im)|an)|m(?:a(?:ke(?:_set|date)|ster_pos_wait|x)|i(?:(?:crosecon)?d|n(?:ute)?)|o(?:nth(?:name)?|d)|d5)|r(?:e(?:p(?:lace|eat)|lease_lock|verse)|a(?:wtohex|dians|nd)|o(?:w_count|und)|ight|trim|pad)|f(?:i(?:eld(?:_in_set)?|nd_in_set)|rom_(?:unixtime|base64|days)|o(?:und_rows|rmat)|loor)|p(?:o(?:w(?:er)?|sition)|eriod_(?:diff|add)|rocedure_analyse|assword|g_sleep|i)|a(?:s(?:cii(?:str)?|in)|es_(?:de|en)crypt|dd(?:dat|tim)e|(?:co|b)s|tan2?|vg)|b(?:i(?:t_(?:length|count|x?or|and)|n(?:_to_num)?)|enchmark)|e(?:x(?:tract(?:value)?|p(?:ort_set)?)|nc(?:rypt|ode)|lt)|g(?:r(?:oup_conca|eates)t|et_(?:format|lock))|v(?:a(?:r(?:_(?:sam|po)p|iance)|lues)|ersion)|o(?:(?:ld_passwo)?rd|ct(?:et_length)?)|we(?:ek(?:ofyear|day)?|ight_string)|n(?:o(?:t_in|w)|ame_const|ullif)|h(?:ex(?:toraw)?|our)|qu(?:arter|ote)|year(?:week)?|xmltype)\W*\(" \
+        "id:942150,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,t:lowercase,\
+        msg:'SQL Injection Attack',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/2',\
+        ctl:auditLogParts=+E,\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl2=+%{tx.critical_anomaly_score}'"
+
+    # Regexp generated from util/regexp-assemble/regexp-942180.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942180.data
+    # Note that after assemble an ignore case flag is inserted in the
+    # first non-capturing group from the Regexp::Assemble output:
+    #    ASSEMBLE_OUTPUT | s/^(?:/(?i:/
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:[\"'`](?:\s*?(?:(?:between|x?or|and|div)[\w\s-]+\s*?[+<>=(),-]\s*?[\d\"'`]|like(?:[\w\s-]+\s*?[+<>=(),-]\s*?[\d\"'`]|\W+[\w\"'`(])|[!=|](?:[\d\s!=+-]+.*?[\"'`(].*?|[\d\s!=]+.*?\d+)$|[^\w\s]?=\s*?[\"'`])|(?:\W*?[+=]+\W*?|[<>~]+)[\"'`])|(?:/\*)+[\"'`]+\s?(?:\/\*|--|\{|#)?|\d[\"'`]\s+[\"'`]\s+\d|where\s[\s\w\.,-]+\s=|^admin\s*?[\"'`]|\sis\s*?0\W)" \
+        "id:942180,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Detects basic SQL authentication bypass attempts 1/3',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl2=+%{tx.critical_anomaly_score}'"
+
+    # This rule is also triggered by the following exploit(s):
+    # [ SAP CRM Java vulnerability CVE-2018-2380 - Exploit tested: https://www.exploit-db.com/exploits/44292 ]
+    #
+    # Regexp generated from util/regexp-assemble/regexp-942200.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942200.data
+    # Note that after assemble an outer bracket with an ignore case flag is added
+    # to the Regexp::Assemble output:
+    #   (?i:ASSEMBLE_OUTPUT)
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:(?:(?:(?:(?:trunc|cre|upd)at|renam)e|(?:inser|selec)t|de(?:lete|sc)|alter|load)\s*?\(\s*?space\s*?\(|,.*?[)\da-f\"'`][\"'`](?:[\"'`].*?[\"'`]|(?:\r?\n)?\z|[^\"'`]+)|\Wselect.+\W*?from))" \
+        "id:942200,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Detects MySQL comment-/space-obfuscated injections and backtick termination',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl2=+%{tx.critical_anomaly_score}'"
+
+    # This rule is also triggered by the following exploit(s):
+    # [ SAP CRM Java vulnerability CVE-2018-2380 - Exploit tested: https://www.exploit-db.com/exploits/44292 ]
+    #
+    # Regexp generated from util/regexp-assemble/regexp-942210.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942210.data
+    # Note that after assemble an outer bracket with an ignore case flag is added
+    # to the Regexp::Assemble output:
+    #   (?i:ASSEMBLE_OUTPUT)
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:(?:(?:n(?:and|ot)|(?:x?x)?or|between|\|\||like|and|div|&&)[\s(]+\w+[\s)]*?[!=+]+[\s\d]*?[\"'`=()]|\d(?:\s*?(?:between|like|x?or|and|div)\s*?\d+\s*?[\-+]|\s+group\s+by.+\()|\/\w+;?\s+(?:between|having|select|like|x?or|and|div)\W|--\s*?(?:(?:insert|update)\s*?\w{2,}|alter|drop)|#\s*?(?:(?:insert|update)\s*?\w{2,}|alter|drop)|;\s*?(?:(?:insert|update)\s*?\w{2,}|alter|drop)|\@.+=\s*?\(\s*?select|[^\w]SET\s*?\@\w+))" \
+        "id:942210,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Detects chained SQL injection attempts 1/2',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl2=+%{tx.critical_anomaly_score}'"
+
+    # Regexp generated from util/regexp-assemble/regexp-942260.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble-v2.pl regexp-942260.data
+    # Note that after assemble an outer bracket with an ignore case flag is added
+    # to the Regexp::Assemble output:
+    #    ASSEMBLE_OUTPUT | s/^(?:/(?i:/
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:[\"'`]\s*?(?:(?:n(?:and|ot)|(?:x?x)?or|between|\|\||and|div|&&)\s+[\s\w]+=\s*?\w+\s*?having\s+|like(?:\s+[\s\w]+=\s*?\w+\s*?having\s+|\W*?[\"'`\d])|[^?\w\s=.,;)(]++\s*?[(@\"'`]*?\s*?\w+\W+\w|\*\s*?\w+\W+[\"'`])|(?:union\s*?(?:distinct|[(!@]*?|all)?\s*?[([]*?\s*?select|select\s+?[\[\]()\s\w\.,\"'`-]+from)\s+|\w\s+like\s+[\"'`]|find_in_set\s*?\(|like\s*?[\"'`]%)" \
+        "id:942260,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Detects basic SQL authentication bypass attempts 2/3',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl2=+%{tx.critical_anomaly_score}'"
+
+    # Regexp generated from util/regexp-assemble/regexp-942300.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942300.data
+    # Note that after assemble an outer bracket with an ignore case flag is added
+    # to the Regexp::Assemble output:
+    #   (?i:ASSEMBLE_OUTPUT)
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:(?:(?:n(?:and|ot)|(?:x?x)?or|between|\|\||like|and|div|&&)\s+\s*?\w+\(|\)\s*?when\s*?\d+\s*?then|[\"'`]\s*?(?:--|\{|#)|cha?r\s*?\(\s*?\d|\/\*!\s?\d+))" \
+        "id:942300,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Detects MySQL comments, conditions and ch(a)r injections',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl2=+%{tx.critical_anomaly_score}'"
+
+    # Regexp generated from util/regexp-assemble/regexp-942310.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942310.data
+    # Note that after assemble an outer bracket with an ignore case flag is added
+    # to the Regexp::Assemble output:
+    #   (?i:ASSEMBLE_OUTPUT)
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:(?:[\"'`](?:;\s*?(?:begin|while|if)|[\s\d]+=\s*?\d|\s+and\s*?=\W)|(?:\(\s*?select\s*?\w+|order\s+by\s+if\w*?|coalesce)\s*?\(|\w[\"'`]\s*?(?:(?:[-+=|@]+\s+?)+|[-+=|@]+)[\d(]|[\s(]+case\d*?\W.+[tw]hen[\s(]|\+\s*?\d+\s*?\+\s*?\@|\@\@\w+\s*?[^\w\s]|\W!+[\"'`]\w|\*\/from))" \
+        "id:942310,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Detects chained SQL injection attempts 2/2',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl2=+%{tx.critical_anomaly_score}'"
+
+    #
+    # -=[ SQL Injection Probings ]=-
+    #
+    # This is a group of three similar rules aiming to detect SQL injection probings.
+    #
+    # 942330 PL 2
+    # 942370 PL 2
+    # 942490 PL 3
+    # Regexp generated from util/regexp-assemble/regexp-942330.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942330.data
+    # Note that after assemble an outer bracket with an ignore case flag is added
+    # to the Regexp::Assemble output:
+    #   (?i:ASSEMBLE_OUTPUT)
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:(?:^(?:[\"'`\\\\]*?(?:[^\"'`]+[\"'`]|[\d\"'`]+)\s*?(?:n(?:and|ot)|(?:x?x)?or|between|\|\||like|and|div|&&)\s*?[\w\"'`][+&!@(),.-]|.?[\"'`]$)|\@(?:[\w-]+\s(?:between|like|x?or|and|div)\s*?[^\w\s]|\w+\s+(?:between|like|x?or|and|div)\s*?[\"'`\d]+)|[\"'`]\s*?(?:between|like|x?or|and|div)\s*?[\"'`]?\d|[^\w\s:]\s*?\d\W+[^\w\s]\s*?[\"'`].|[^\w\s]\w+\s*?[|-]\s*?[\"'`]\s*?\w|\Winformation_schema|\\\\x(?:23|27|3d)|table_name\W))" \
+        "id:942330,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Detects classic SQL injection probings 1/3',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl2=+%{tx.critical_anomaly_score}'"
+
+    # Regexp generated from util/regexp-assemble/regexp-942340.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942340.data
+    #   Note that part of regexp-942340.data is already optimized, to avoid a
+    #   Regexp::Assemble behaviour, where the regex is not optimized very nicely.
+    # Note that after assemble an outer bracket with an ignore case flag is added
+    # to the Regexp::Assemble output:
+    #   (?i:ASSEMBLE_OUTPUT)
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:(?:[\"'`](?:\s*?(?:is\s*?(?:[\d.]+\s*?\W.*?[\"'`]|\d.+[\"'`]?\w)|\d\s*?(?:--|#))|(?:\W+[\w+-]+\s*?=\s*?\d\W+|\|?[\w-]{3,}[^\w\s.,]+)[\"'`]|[\%&<>^=]+\d\s*?(?:between|like|x?or|and|div|=))|(?i:n?and|x?x?or|div|like|between|not|\|\||\&\&)\s+[\s\w+]+(?:sounds\s+like\s*?[\"'`]|regexp\s*?\(|[=\d]+x)|in\s*?\(+\s*?select))" \
+        "id:942340,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Detects basic SQL authentication bypass attempts 3/3',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl2=+%{tx.critical_anomaly_score}'"
+
+    # This rule is a stricter sibling of 942360.
+    # The keywords 'alter' and 'union' led to false positives.
+    # Therefore they have been moved to PL2 and the keywords have been extended on PL1.
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:^[\W\d]+\s*?(?:alter|union)\b)" \
+        "id:942361,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Detects basic SQL injection based on keyword alter or union',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl2=+%{tx.critical_anomaly_score}'"
+
+    # This rule is a sibling of 942330. See that rule for a description and overview.
+    #
+    # This rule is also triggered by the following exploit(s):
+    # [ SAP CRM Java vulnerability CVE-2018-2380 - Exploit tested: https://www.exploit-db.com/exploits/44292 ]
+    #
+    # Regexp generated from util/regexp-assemble/regexp-942370.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942370.data
+    # Note that after assemble an ignore case flag is added
+    # to the Regexp::Assemble output:
+    #   (?i:ASSEMBLE_OUTPUT)
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:[\"'`](?:\s*?(?:(?:\*.+(?:(?:an|i)d|between|like|x?or|div)\W*?[\"'`]|(?:between|like|x?or|and|div)\s[^\d]+[\w-]+.*?)\d|[^\w\s?]+\s*?[^\w\s]+\s*?[\"'`]|[^\w\s]+\s*?[\W\d].*?(?:--|#))|.*?\*\s*?\d)|[()\*<>%+-][\w-]+[^\w\s]+[\"'`][^,]|\^[\"'`])" \
+        "id:942370,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Detects classic SQL injection probings 2/3',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl2=+%{tx.critical_anomaly_score}'"
+
+    # Regexp generated from util/regexp-assemble/regexp-942380.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942380.data
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|!REQUEST_COOKIES:/_pk_ref/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?:\b(?:having\b ?(?:[\'\"][^=]{1,10}[\'\" ?[=<>]+|\d{1,10} ?[=<>]+)|(?i:having)\b\s+(?:'[^=]{1,10}'|\d{1,10})\s*?[=<>])|exists\s(?:s(?:elect\S(?:if(?:null)?\s\(|concat|top)|ystem\s\()|\b(?i:having)\b\s+\d{1,10}|'[^=]{1,10}'|\sselect)|(?i:\bexecute\s{1,5}[\w\.$]{1,5}\s{0,3})|(?i:\bcreate\s+?table.{0,20}?\()|(?i:\blike\W*?char\W*?\()|(?i:select.*?case)|(?i:from.*?limit)|(?i:\bexecute\()|(?i:order\sby))" \
+        "id:942380,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'SQL Injection Attack',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/2',\
+        ctl:auditLogParts=+E,\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl2=+%{tx.critical_anomaly_score}'"
+
+    # Regexp generated from util/regexp-assemble/regexp-942390.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942390.data
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|!REQUEST_COOKIES:/_pk_ref/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?:\b(?:(?i:xor)\b\s+(?:'[^=]{1,10}'(?:\s*?[=<>])?|\d{1,10}(?:\s*?[=<>])?)|(?i:or)\b\s+(?:'[^=]{1,10}'(?:\s*?[=<>])?|\d{1,10}(?:\s*?[=<>])?))|(?i:\bor\b ?[\'\"][^=]{1,10}[\'\"] ?[=<>]+)|(?i:'\s+xor\s+.{1,20}[+\-!<>=])|(?i:'\s+or\s+.{1,20}[+\-!<>=])|(?i:\bor\b ?\d{1,10} ?[=<>]+))" \
+        "id:942390,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'SQL Injection Attack',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/2',\
+        ctl:auditLogParts=+E,\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl2=+%{tx.critical_anomaly_score}'"
+
+    # Regexp generated from util/regexp-assemble/regexp-942400.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942400.data
+    # Note that after assemble an outer bracket with an ignore case flag is added
+    # to the Regexp::Assemble output:
+    #   (?i:ASSEMBLE_OUTPUT)
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|!REQUEST_COOKIES:/_pk_ref/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:\band\b(?:\s+(?:'[^=]{1,10}'(?:\s*?[=<>])?|\d{1,10}(?:\s*?[=<>])?)| ?(?:[\'\"][^=]{1,10}[\'\"]|\d{1,10}) ?[=<>]+))" \
+        "id:942400,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'SQL Injection Attack',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/2',\
+        ctl:auditLogParts=+E,\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl2=+%{tx.critical_anomaly_score}'"
+
+    # The former rule id 942410 was split into three new rules: 942410, 942470, 942480
+    #
+    # This rule is also triggered by the following exploit(s):
+    # [ SAP CRM Java vulnerability CVE-2018-2380 - Exploit tested: https://www.exploit-db.com/exploits/44292 ]
+    #
+    # Regexp generated from util/regexp-assemble/regexp-942410.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942410.data
+    # Note that after assemble an outer bracket with an ignore case flag is added
+    # to the Regexp::Assemble output.
+    # And a word boundary is added before and a non-word character with an opening bracket
+    # is added after the Regexp::Assemble output:
+    #   (?i:\bASSEMBLE_OUTPUT\W*?\()
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|!REQUEST_COOKIES:/_pk_ref/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:\b(?:c(?:o(?:n(?:v(?:ert(?:_tz)?)?|cat(?:_ws)?|nection_id)|(?:mpres)?s|ercibility|(?:un)?t|alesce)|ur(?:rent_(?:time(?:stamp)?|date|user)|(?:dat|tim)e)|h(?:ar(?:(?:acter)?_length|set)?|r)|iel(?:ing)?|ast|r32)|s(?:t(?:d(?:dev(?:_(?:sam|po)p)?)?|r(?:_to_date|cmp))|u(?:b(?:str(?:ing(?:_index)?)?|(?:dat|tim)e)|m)|e(?:c(?:_to_time|ond)|ssion_user)|ys(?:tem_user|date)|ha[12]?|oundex|chema|ig?n|leep|pace|qrt)|i(?:s(?:_(?:ipv(?:4(?:_(?:compat|mapped))?|6)|n(?:ot(?:_null)?|ull)|(?:free|used)_lock)|null)?|n(?:et(?:6_(?:aton|ntoa)|_(?:aton|ntoa))|s(?:ert|tr)|terval)?|f(?:null)?)|d(?:a(?:t(?:e(?:_(?:format|add|sub)|diff)?|abase)|y(?:of(?:month|week|year)|name)?)|e(?:(?:s_(?:de|en)cryp|faul)t|grees|code)|count|ump)|l(?:o(?:ca(?:l(?:timestamp)?|te)|g(?:10|2)?|ad_file|wer)|ast(?:_(?:insert_id|day))?|e(?:(?:as|f)t|ngth)|case|trim|pad|n)|u(?:n(?:compress(?:ed_length)?|ix_timestamp|hex)|tc_(?:time(?:stamp)?|date)|p(?:datexml|per)|uid(?:_short)?|case|ser)|r(?:a(?:wto(?:nhex(?:toraw)?|hex)|dians|nd)|e(?:p(?:lace|eat)|lease_lock|verse)|o(?:w_count|und)|ight|trim|pad)|t(?:ime(?:_(?:format|to_sec)|stamp(?:diff|add)?|diff)?|o_(?:(?:second|day)s|base64|n?char)|r(?:uncate|im)|an)|m(?:a(?:ke(?:_set|date)|ster_pos_wait|x)|i(?:(?:crosecon)?d|n(?:ute)?)|o(?:nth(?:name)?|d)|d5)|f(?:i(?:eld(?:_in_set)?|nd_in_set)|rom_(?:unixtime|base64|days)|o(?:und_rows|rmat)|loor)|p(?:o(?:w(?:er)?|sition)|eriod_(?:diff|add)|rocedure_analyse|assword|g_sleep|i)|a(?:s(?:cii(?:str)?|in)|es_(?:de|en)crypt|dd(?:dat|tim)e|(?:co|b)s|tan2?|vg)|b(?:i(?:t_(?:length|count|x?or|and)|n(?:_to_num)?)|enchmark)|e(?:x(?:tract(?:value)?|p(?:ort_set)?)|nc(?:rypt|ode)|lt)|g(?:r(?:oup_conca|eates)t|et_(?:format|lock))|v(?:a(?:r(?:_(?:sam|po)p|iance)|lues)|ersion)|o(?:(?:ld_passwo)?rd|ct(?:et_length)?)|we(?:ek(?:ofyear|day)?|ight_string)|n(?:o(?:t_in|w)|ame_const|ullif)|h(?:ex(?:toraw)?|our)|qu(?:arter|ote)|year(?:week)?|xmltype)\W*?\()" \
+        "id:942410,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'SQL Injection Attack',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/2',\
+        ctl:auditLogParts=+E,\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl2=+%{tx.critical_anomaly_score}'"
+
+
+    # The former rule id 942410 was split into three new rules: 942410, 942470, 942480
+    #
+    # Regexp generated from util/regexp-assemble/regexp-942470.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942470.data
+    # Note that after assemble an outer bracket with an ignore case flag is added
+    # to the Regexp::Assemble output:
+    #   (?i:ASSEMBLE_OUTPUT)
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|!REQUEST_COOKIES:/_pk_ref/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:(?:xp_(?:reg(?:re(?:movemultistring|ad)|delete(?:value|key)|enum(?:value|key)s|addmultistring|write)|(?:servicecontro|cmdshel)l|e(?:xecresultset|numdsn)|ntsec(?:_enumdomains)?|terminate(?:_process)?|availablemedia|loginconfig|filelist|dirtree|makecab)|s(?:p_(?:(?:addextendedpro|sqlexe)c|p(?:assword|repare)|replwritetovarbin|is_srvrolemember|execute(?:sql)?|makewebtask|oacreate|help)|ql_(?:longvarchar|variant))|open(?:owa_util|rowset|query)|(?:n?varcha|tbcreato)r|autonomous_transaction|db(?:a_users|ms_java)|utl_(?:file|http)))" \
+        "id:942470,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'SQL Injection Attack',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/2',\
+        ctl:auditLogParts=+E,\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl2=+%{tx.critical_anomaly_score}'"
+
+
+    # The former rule id 942410 was split into three new rules: 942410, 942470, 942480
+    #
+    # Regexp generated from util/regexp-assemble/regexp-942480.data using Regexp::Assemble.
+    # To rebuild the regexp:
+    #   cd util/regexp-assemble
+    #   ./regexp-assemble.pl regexp-942480.data
+    # Note that after assemble an outer bracket with an ignore case flag is added
+    # to the Regexp::Assemble output:
+    #   (?i:ASSEMBLE_OUTPUT)
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|!REQUEST_COOKIES:/_pk_ref/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:(?:\b(?:(?:s(?:elect\b.{1,100}?\b(?:(?:(?:length|count)\b.{1,100}?|.*?\bdump\b.*)\bfrom|to(?:p\b.{1,100}?\bfrom|_(?:numbe|cha)r)|(?:from\b.{1,100}?\bwher|data_typ)e|instr)|ys_context)|in(?:to\b\W*?\b(?:dump|out)file|sert\b\W*?\binto|ner\b\W*?\bjoin)|u(?:nion\b.{1,100}?\bselect|tl_inaddr)|group\b.*?\bby\b.{1,100}?\bhaving|d(?:elete\b\W*?\bfrom|bms_\w+\.)|load\b\W*?\bdata\b.*?\binfile)\b|print\b\W*?\@\@)|(?:;\W*?\b(?:shutdown|drop)|collation\W*?\(a|\@\@version)\b|'(?:s(?:qloledb|a)|msdasql|dbo)'))" \
+        "id:942480,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'SQL Injection Attack',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/2',\
+        ctl:auditLogParts=+E,\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl2=+%{tx.critical_anomaly_score}'"
+
+
+    #
+    # [ SQL Injection Character Anomaly Usage ]
+    #
+    # This rule is also triggered by the following exploit(s):
+    # [ SAP CRM Java vulnerability CVE-2018-2380 - Exploit tested: https://www.exploit-db.com/exploits/44292 ]
+    #
+    # This rules attempts to gauge when there is an excessive use of
+    # meta-characters within a single parameter payload.
+    #
+    # Expect a lot of false positives with this rule.
+    # The most likely false positive instances will be free-form text fields.
+    # This will make it necessary to disable the rule for certain known parameters.
+    # The following directive is an example to switch off the rule globally for
+    # the parameter foo. Place this instruction in your configuration after
+    # the include directive for the Core Rules Set.
+    #
+    # SecRuleUpdateTargetById 942430 "!ARGS:foo"
+    #
+
+    #SecRule ARGS_NAMES|ARGS|XML:/* "@rx ((?:[~!@#\$%\^&\*\(\)\-\+=\{\}\[\]\|:;\"'´’‘`<>][^~!@#\$%\^&\*\(\)\-\+=\{\}\[\]\|:;\"'´’‘`<>]*?){12})" \
+    #    "id:942430,\
+    #    phase:2,\
+    #    block,\
+    #    capture,\
+    #    t:none,t:urlDecodeUni,\
+    #    msg:'Restricted SQL Character Anomaly Detection (args): # of special characters exceeded (12)',\
+    #    logdata:'Matched Data: %{TX.1} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+    #    tag:'application-multi',\
+    #    tag:'language-multi',\
+    #    tag:'platform-multi',\
+    #    tag:'attack-sqli',\
+    #    tag:'OWASP_CRS',\
+    #    tag:'capec/1000/152/248/66',\
+    #    tag:'PCI/6.5.2',\
+    #    tag:'paranoia-level/2',\
+    #    ver:'OWASP_CRS/3.3.2',\
+    #    severity:'WARNING',\
+    #    setvar:'tx.anomaly_score_pl2=+%{tx.warning_anomaly_score}',\
+    #    setvar:'tx.sql_injection_score=+%{tx.warning_anomaly_score}'"
+
+
+    #
+    # -=[ Detect SQL Comment Sequences ]=-
+    #
+    # Example Payloads Detected:
+    # -------------------------
+    # OR 1#
+    # DROP sampletable;--
+    # admin'--
+    # DROP/*comment*/sampletable
+    # DR/**/OP/*bypass blacklisting*/sampletable
+    # SELECT/*avoid-spaces*/password/**/FROM/**/Members
+    # SELECT /*!32302 1/0, */ 1 FROM tablename
+    # ‘ or 1=1#
+    # ‘ or 1=1-- -
+    # ‘ or 1=1/*
+    # ' or 1=1;\x00
+    # 1='1' or-- -
+    # ' /*!50000or*/1='1
+    # ' /*!or*/1='1
+    # 0/**/union/*!50000select*/table_name`foo`/**/
+    # -------------------------
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|!REQUEST_COOKIES:/_pk_ref/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?:/\*!?|\*/|[';]--|--[\s\r\n\v\f]|--[^-]*?-|[^&-]#.*?[\s\r\n\v\f]|;?\\x00)" \
+        "id:942440,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'SQL Comment Sequence Detected',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.anomaly_score_pl2=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}'"
+
+
+    #
+    # -=[ SQL Hex Evasion Methods ]=-
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|!REQUEST_COOKIES:/_pk_ref/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i:\b0x[a-f\d]{3,})" \
+        "id:942450,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'SQL Hex Encoding Identified',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl2=+%{tx.critical_anomaly_score}'"
+
+
+    #
+    # -=[ Detect SQLi bypass: backticks ]=-
+    #
+    # Quotes and backticks can be used to bypass SQLi detection.
+    #
+    # Example:
+    # GET http://localhost/test.php?id=9999%20or+{`if`(2=(select+2+from+wp_users+where+user_login='admin'))}
+    #
+    # The minimum text between the ticks or backticks must be 2 (if, for example) and a maximum of 29.
+    # 29 is a compromise: The lower this number (29), the lower the probability of FP and the higher the probability of false negatives.
+    # In tests we got a minimum number of FP with {2,29}.
+    #
+    # Base64 encoding detection:
+    # (?:[A-Za-z0-9+/]{4})+ #match any number of 4-letter blocks of the base64 char set
+    # (?:[A-Za-z0-9+/]{2}== #match 2-letter block of the base64 char set followed by "==", together forming a 4-letter block
+    # |                     # or
+    # [A-Za-z0-9+/]{3}=     #match 3-letter block of the base64 char set followed by "=", together forming a 4-letter block
+    # )?
+    #
+    # The minimal string that triggers this regexp is: `if`
+    #
+    # The rule 942510 is related to 942110 which catches a single ' or `
+    #
+    # The rule 942511 is similar to this rule, but triggers on normal quotes
+    # ('if'). That rule runs in paranoia level 3 or higher since it is prone to
+    # false positives in natural text.
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?:`((?:[\w\s=_\-+{}()<@]){2,29}|(?:[A-Za-z0-9+\/]{4})+(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?)`)" \
+        "id:942510,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'SQLi bypass attempt by ticks or backticks detected',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/2',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl2=+%{tx.critical_anomaly_score}'"
+
+
+    SecRule TX:EXECUTING_PARANOIA_LEVEL "@lt 3" "id:942015,phase:1,pass,nolog,skipAfter:END-REQUEST-942-APPLICATION-ATTACK-SQLI"
+    SecRule TX:EXECUTING_PARANOIA_LEVEL "@lt 3" "id:942016,phase:2,pass,nolog,skipAfter:END-REQUEST-942-APPLICATION-ATTACK-SQLI"
+    #
+    # -= Paranoia Level 3 =- (apply only when tx.executing_paranoia_level is sufficiently high: 3 or higher)
+    #
+
+
+    #
+    # [ SQL HAVING queries ]
+    #
+    # This pattern was split off from rule 942250 due to frequent
+    # false positives in English text. Testing showed that SQL
+    # injections with HAVING should be detected by libinjection
+    # (rule 942100).
+    #
+    # This is a stricter sibling of rule 942250.
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?i)\W+\d*?\s*?having\s*?[^\s\-]" \
+        "id:942251,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Detects HAVING injections',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/3',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl3=+%{tx.critical_anomaly_score}'"
+
+    # This rule is a stricter sibling of 942330. See that rule for a
+    # description and overview.
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx [\"'`][\s\d]*?[^\w\s]\W*?\d\W*?.*?[\"'`\d]" \
+        "id:942490,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Detects classic SQL injection probings 3/3',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/3',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl3=+%{tx.critical_anomaly_score}'"
+
+    #
+    # [ SQL Injection Character Anomaly Usage ]
+    #
+    # This rule attempts to gauge when there is an excessive use of
+    # meta-characters within a single parameter payload.
+    #
+    # It is similar to 942430, but focuses on Cookies instead of
+    # GET/POST parameters.
+    #
+    # Expect a lot of false positives with this rule.
+    # The most likely false positive instances will be complex session ids.
+    # This will make it necessary to disable the rule for certain known cookies.
+    # The following directive is an example to switch off the rule globally for
+    # the cookie foo_id. Place this instruction in your configuration after
+    # the include directive for the Core Rules Set.
+    #
+    # SecRuleUpdateTargetById 942420 "!REQUEST_COOKIES:foo_id"
+    #
+
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|!REQUEST_COOKIES:/_pk_ref/|REQUEST_COOKIES_NAMES "@rx ((?:[~!@#\$%\^&\*\(\)\-\+=\{\}\[\]\|:;\"'´’‘`<>][^~!@#\$%\^&\*\(\)\-\+=\{\}\[\]\|:;\"'´’‘`<>]*?){8})" \
+        "id:942420,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Restricted SQL Character Anomaly Detection (cookies): # of special characters exceeded (8)',\
+        logdata:'Matched Data: %{TX.1} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/3',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'WARNING',\
+        setvar:'tx.anomaly_score_pl3=+%{tx.warning_anomaly_score}',\
+        setvar:'tx.sql_injection_score=+%{tx.warning_anomaly_score}'"
+
+
+    #
+    # This is a stricter sibling of rule 942430.
+    #
+    # This rule is also triggered by the following exploit(s):
+    # [ SAP CRM Java vulnerability CVE-2018-2380 - Exploit tested: https://www.exploit-db.com/exploits/44292 ]
+    #
+
+    SecRule ARGS_NAMES|ARGS|XML:/* "@rx ((?:[~!@#\$%\^&\*\(\)\-\+=\{\}\[\]\|:;\"'´’‘`<>][^~!@#\$%\^&\*\(\)\-\+=\{\}\[\]\|:;\"'´’‘`<>]*?){6})" \
+        "id:942431,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Restricted SQL Character Anomaly Detection (args): # of special characters exceeded (6)',\
+        logdata:'Matched Data: %{TX.1} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/3',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'WARNING',\
+        setvar:'tx.anomaly_score_pl3=+%{tx.warning_anomaly_score}',\
+        setvar:'tx.sql_injection_score=+%{tx.warning_anomaly_score}'"
+
+
+    #
+    # [ Repetitive Non-Word Characters ]
+    #
+    # This rule attempts to identify when multiple (4 or more) non-word characters
+    # are repeated in sequence.
+    #
+    # The pattern may occur in some normal texts, e.g. "foo...." will match.
+    #
+    SecRule ARGS "@rx \W{4}" \
+        "id:942460,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'Meta-Character Anomaly Detection Alert - Repetitive Non-Word Characters',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/3',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'WARNING',\
+        setvar:'tx.sql_injection_score=+%{tx.warning_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl3=+%{tx.warning_anomaly_score}'"
+
+
+    #
+    # This is a sibling of rule 942100 that adds checking of the last path segment.
+    #
+    # libinjection is more likely to fail when passing the full path. E.g. the following
+    # string produces a match:
+    # 999999.1 union select unhex(hex(version())) -- and 1=1
+    # while this doesn't:
+    # /999999.1 union select unhex(hex(version())) -- and 1=1\.
+    # Therefore, we capture the last segment of the path and only match that with
+    # libinjection. Incidentally, the last path segment is also the most likely
+    # to be used for injection, other segments will most likely not be affected.
+    #
+    SecRule REQUEST_BASENAME "@detectSQLi" \
+        "id:942101,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:utf8toUnicode,t:urlDecodeUni,t:removeNulls,\
+        msg:'SQL Injection Attack Detected via libinjection',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/3',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl3=+%{tx.critical_anomaly_score}'"
+
+
+    #
+    # -=[ Detect SQLi bypass: quotes ]=-
+    #
+    # Quotes and backticks can be used to bypass SQLi detection.
+    #
+    # Example:
+    # GET http://localhost/test.php?id=9999%20or+{`if`(2=(select+2+from+wp_users+where+user_login='admin'))}
+    #
+    # The minimum text between the ticks or backticks must be 2 (if, for example) and a maximum of 29.
+    # 29 is a compromise: The lower this number (29), the lower the probability of FP and the higher the probability of false negatives.
+    # In tests we got a minimum number of FP with {2,29}.
+    #
+    # Base64 encoding detection:
+    # (?:[A-Za-z0-9+/]{4})+ #match any number of 4-letter blocks of the base64 char set
+    # (?:[A-Za-z0-9+/]{2}== #match 2-letter block of the base64 char set followed by "==", together forming a 4-letter block
+    # |                     # or
+    # [A-Za-z0-9+/]{3}=     #match 3-letter block of the base64 char set followed by "=", together forming a 4-letter block
+    # )?
+    #
+    # The minimal string that triggers this regexp is: 'if'
+    #
+    # The rule 942511 is related to 942110 which catches a single ' or `
+    #
+    # The rule 942510 is similar to this rule, but triggers on backticks
+    # (`if`). That rule runs in paranoia level 2 or higher since the risk of
+    # false positives in natural text is still present but lower than this
+    # rule.
+    #
+    SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|REQUEST_COOKIES_NAMES|ARGS_NAMES|ARGS|XML:/* "@rx (?:'((?:[\w\s=_\-+{}()<@]){2,29}|(?:[A-Za-z0-9+\/]{4})+(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?)')" \
+        "id:942511,\
+        phase:2,\
+        block,\
+        capture,\
+        t:none,t:urlDecodeUni,\
+        msg:'SQLi bypass attempt by ticks detected',\
+        logdata:'Matched Data: %{TX.0} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-sqli',\
+        tag:'OWASP_CRS',\
+        tag:'capec/1000/152/248/66',\
+        tag:'PCI/6.5.2',\
+        tag:'paranoia-level/3',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.sql_injection_score=+%{tx.critical_anomaly_score}',\
+        setvar:'tx.anomaly_score_pl3=+%{tx.critical_anomaly_score}'"
+
+    SecRule TX:EXECUTING_PARANOIA_LEVEL "@lt 4" "id:942017,phase:1,pass,nolog,skipAfter:END-REQUEST-942-APPLICATION-ATTACK-SQLI"
+    SecRule TX:EXECUTING_PARANOIA_LEVEL "@lt 4" "id:942018,phase:2,pass,nolog,skipAfter:END-REQUEST-942-APPLICATION-ATTACK-SQLI"
+    #
+    # -= Paranoia Level 4 =- (apply only when tx.executing_paranoia_level is sufficiently high: 4 or higher)
+    #
+
+    #
+    # [ SQL Injection Character Anomaly Usage ]
+    #
+    # This is a stricter sibling of rule 942420.
+    #
+
+    #SecRule REQUEST_COOKIES|!REQUEST_COOKIES:/__utm/|!REQUEST_COOKIES:/_pk_ref/|REQUEST_COOKIES_NAMES "@rx ((?:[~!@#\$%\^&\*\(\)\-\+=\{\}\[\]\|:;\"'´’‘`<>][^~!@#\$%\^&\*\(\)\-\+=\{\}\[\]\|:;\"'´’‘`<>]*?){3})" \
+    #    "id:942421,\
+    #    phase:2,\
+    #    block,\
+    #    capture,\
+    #    t:none,t:urlDecodeUni,\
+    #    msg:'Restricted SQL Character Anomaly Detection (cookies): # of special characters exceeded (3)',\
+    #    logdata:'Matched Data: %{TX.1} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+    #    tag:'application-multi',\
+    #    tag:'language-multi',\
+    #    tag:'platform-multi',\
+    #    tag:'attack-sqli',\
+    #    tag:'OWASP_CRS',\
+    #    tag:'capec/1000/152/248/66',\
+    #    tag:'PCI/6.5.2',\
+    #    tag:'paranoia-level/4',\
+    #    ver:'OWASP_CRS/3.3.2',\
+    #    severity:'WARNING',\
+    #    setvar:'tx.anomaly_score_pl4=+%{tx.warning_anomaly_score}',\
+    #    setvar:'tx.sql_injection_score=+%{tx.warning_anomaly_score}'"
+
+
+    #
+    # This is a stricter sibling of rule 942430.
+    #
+    # This rule is also triggered by the following exploit(s):
+    # [ SAP CRM Java vulnerability CVE-2018-2380 - Exploit tested: https://www.exploit-db.com/exploits/44292 ]
+    #
+
+    #SecRule ARGS_NAMES|ARGS|XML:/* "@rx ((?:[~!@#\$%\^&\*\(\)\-\+=\{\}\[\]\|:;\"'´’‘`<>][^~!@#\$%\^&\*\(\)\-\+=\{\}\[\]\|:;\"'´’‘`<>]*?){2})" \
+    #    "id:942432,\
+    #    phase:2,\
+    #    block,\
+    #    capture,\
+    #    t:none,t:urlDecodeUni,\
+    #    msg:'Restricted SQL Character Anomaly Detection (args): # of special characters exceeded (2)',\
+    #    logdata:'Matched Data: %{TX.1} found within %{MATCHED_VAR_NAME}: %{MATCHED_VAR}',\
+    #    tag:'application-multi',\
+    #    tag:'language-multi',\
+    #    tag:'platform-multi',\
+    #    tag:'attack-sqli',\
+    #    tag:'OWASP_CRS',\
+    #    tag:'capec/1000/152/248/66',\
+    #    tag:'PCI/6.5.2',\
+    #    tag:'paranoia-level/4',\
+    #    ver:'OWASP_CRS/3.3.2',\
+    #    severity:'WARNING',\
+    #    setvar:'tx.anomaly_score_pl4=+%{tx.warning_anomaly_score}',\
+    #    setvar:'tx.sql_injection_score=+%{tx.warning_anomaly_score}'"
+
+
+    #
+    # -= Paranoia Levels Finished =-
+    #
+    SecMarker "END-REQUEST-942-APPLICATION-ATTACK-SQLI"
+  REQUEST-949-BLOCKING-EVALUATION.conf: |
+    # ------------------------------------------------------------------------
+    # OWASP ModSecurity Core Rule Set ver.3.3.2
+    # Copyright (c) 2006-2020 Trustwave and contributors. All rights reserved.
+    #
+    # The OWASP ModSecurity Core Rule Set is distributed under
+    # Apache Software License (ASL) version 2
+    # Please see the enclosed LICENSE file for full details.
+    # ------------------------------------------------------------------------
+
+    #
+    # -= Paranoia Level 0 (empty) =- (apply unconditionally)
+    #
+
+    # Summing up the anomaly score.
+
+    # NOTE: tx.anomaly_score should not be set initially, but masking would lead to difficult bugs.
+    # So we add to it.
+    SecRule TX:PARANOIA_LEVEL "@ge 1" \
+        "id:949060,\
+        phase:2,\
+        pass,\
+        t:none,\
+        nolog,\
+        setvar:'tx.anomaly_score=+%{tx.anomaly_score_pl1}'"
+
+    SecRule TX:PARANOIA_LEVEL "@ge 2" \
+        "id:949061,\
+        phase:2,\
+        pass,\
+        t:none,\
+        nolog,\
+        setvar:'tx.anomaly_score=+%{tx.anomaly_score_pl2}'"
+
+    SecRule TX:PARANOIA_LEVEL "@ge 3" \
+        "id:949062,\
+        phase:2,\
+        pass,\
+        t:none,\
+        nolog,\
+        setvar:'tx.anomaly_score=+%{tx.anomaly_score_pl3}'"
+
+    SecRule TX:PARANOIA_LEVEL "@ge 4" \
+        "id:949063,\
+        phase:2,\
+        pass,\
+        t:none,\
+        nolog,\
+        setvar:'tx.anomaly_score=+%{tx.anomaly_score_pl4}'"
+
+
+    SecMarker "BEGIN-REQUEST-BLOCKING-EVAL"
+
+    # These rules use the anomaly score settings specified in the 10 config file.
+    # You should also set the desired disruptive action (deny, redirect, etc...).
+    #
+    # -=[ IP Reputation Checks ]=-
+    #
+    # Block based on variable IP.REPUT_BLOCK_FLAG and TX.DO_REPUT_BLOCK
+    #
+    SecRule IP:REPUT_BLOCK_FLAG "@eq 1" \
+        "id:949100,\
+        phase:2,\
+        deny,\
+        log,\
+        msg:'Request Denied by IP Reputation Enforcement',\
+        logdata:'Previous Block Reason: %{ip.reput_block_reason}',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-reputation-ip',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        chain"
+        SecRule TX:DO_REPUT_BLOCK "@eq 1" \
+            "setvar:'tx.inbound_anomaly_score=%{tx.anomaly_score}'"
+
+    #
+    # -=[ Anomaly Mode: Overall Transaction Anomaly Score ]=-
+    #
+    SecRule TX:ANOMALY_SCORE "@ge %{tx.inbound_anomaly_score_threshold}" \
+        "id:949110,\
+        phase:2,\
+        deny,\
+        t:none,\
+        log,\
+        msg:'Inbound Anomaly Score Exceeded (Total Score: %{TX.ANOMALY_SCORE})',\
+        tag:'application-multi',\
+        tag:'language-multi',\
+        tag:'platform-multi',\
+        tag:'attack-generic',\
+        ver:'OWASP_CRS/3.3.2',\
+        severity:'CRITICAL',\
+        setvar:'tx.inbound_anomaly_score=%{tx.anomaly_score}'"
+
+
+
+    SecRule TX:EXECUTING_PARANOIA_LEVEL "@lt 1" "id:949011,phase:1,pass,nolog,skipAfter:END-REQUEST-949-BLOCKING-EVALUATION"
+    SecRule TX:EXECUTING_PARANOIA_LEVEL "@lt 1" "id:949012,phase:2,pass,nolog,skipAfter:END-REQUEST-949-BLOCKING-EVALUATION"
+    #
+    # -= Paranoia Level 1 (default) =- (apply only when tx.executing_paranoia_level is sufficiently high: 1 or higher)
+    #
+
+
+
+    SecRule TX:EXECUTING_PARANOIA_LEVEL "@lt 2" "id:949013,phase:1,pass,nolog,skipAfter:END-REQUEST-949-BLOCKING-EVALUATION"
+    SecRule TX:EXECUTING_PARANOIA_LEVEL "@lt 2" "id:949014,phase:2,pass,nolog,skipAfter:END-REQUEST-949-BLOCKING-EVALUATION"
+    #
+    # -= Paranoia Level 2 =- (apply only when tx.executing_paranoia_level is sufficiently high: 2 or higher)
+    #
+
+
+
+    SecRule TX:EXECUTING_PARANOIA_LEVEL "@lt 3" "id:949015,phase:1,pass,nolog,skipAfter:END-REQUEST-949-BLOCKING-EVALUATION"
+    SecRule TX:EXECUTING_PARANOIA_LEVEL "@lt 3" "id:949016,phase:2,pass,nolog,skipAfter:END-REQUEST-949-BLOCKING-EVALUATION"
+    #
+    # -= Paranoia Level 3 =- (apply only when tx.executing_paranoia_level is sufficiently high: 3 or higher)
+    #
+
+
+
+    SecRule TX:EXECUTING_PARANOIA_LEVEL "@lt 4" "id:949017,phase:1,pass,nolog,skipAfter:END-REQUEST-949-BLOCKING-EVALUATION"
+    SecRule TX:EXECUTING_PARANOIA_LEVEL "@lt 4" "id:949018,phase:2,pass,nolog,skipAfter:END-REQUEST-949-BLOCKING-EVALUATION"
+    #
+    # -= Paranoia Level 4 =- (apply only when tx.executing_paranoia_level is sufficiently high: 4 or higher)
+    #
+
+
+
+    #
+    # -= Paranoia Levels Finished =-
+    #
+    SecMarker "END-REQUEST-949-BLOCKING-EVALUATION"
+  RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf: |
+    # ------------------------------------------------------------------------
+    # OWASP ModSecurity Core Rule Set ver.3.3.2
+    # Copyright (c) 2006-2020 Trustwave and contributors. All rights reserved.
+    #
+    # The OWASP ModSecurity Core Rule Set is distributed under
+    # Apache Software License (ASL) version 2
+    # Please see the enclosed LICENSE file for full details.
+    # ------------------------------------------------------------------------
+
+    #
+    # The purpose of this file is to hold LOCAL exceptions for your site.
+    # The types of rules that would go into this file are one where you want
+    # to unconditionally disable rules or modify their actions during startup.
+    #
+    # Please see the file REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf.example
+    # for a description of the rule exclusions mechanism and the correct
+    # use of this file.
+    #
+
+    #
+    # Example Exclusion Rule: To unconditionally disable a rule ID
+    #
+    # ModSecurity Rule Exclusion: 942100 SQL Injection Detected via libinjection
+    # SecRuleRemoveById 942100
+
+    # Example Exclusion Rule: Remove a group of rules
+    #
+    # ModSecurity Rule Exclusion: Disable PHP injection rules
+    # SecRuleRemoveByTag "attack-injection-php"
+
+    #
+    # Example Exclusion Rule: To unconditionally remove parameter "foo" from
+    #                         inspection for SQLi rules
+    #
+    # ModSecurity Rule Exclusion: disable sqli rules for parameter foo.
+    # SecRuleUpdateTargetByTag "attack-sqli" "!ARGS:foo"
+
+
+    # -- [[ Changing the Disruptive Action for Anomaly Mode ]] --
+    #
+    # In Anomaly Mode (default in CRS3), the rules in REQUEST-949-BLOCKING-EVALUATION.conf
+    # and RESPONSE-959-BLOCKING-EVALUATION.conf check the accumulated attack scores
+    # against your policy. To apply a disruptive action, they overwrite the default
+    # actions specified in SecDefaultAction (setup.conf) with a 'deny' action.
+    # This 'deny' is by default paired with a 'status:403' action.
+    #
+    # In order to change the disruptive action from 'deny' to something else,
+    # you must use SecRuleUpdateActionByID directives AFTER the CRS rules
+    # are configured, for instance in the RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf file.
+    #
+    # These actions only apply when using Anomaly Mode.
+    #
+    # Default action: block with error 403
+    # (No configuration needed in this file if you want the default behavior.)
+    #
+
+    # Example: redirect back to the homepage on blocking
+    #
+    # SecRuleUpdateActionById 949110 "t:none,redirect:'http://%{request_headers.host}/'"
+    # SecRuleUpdateActionById 959100 "t:none,redirect:'http://%{request_headers.host}/'"
+
+    # Example: redirect to another URL on blocking
+    #
+    # SecRuleUpdateActionById 949110 "t:none,redirect:'http://example.com/report_problem'"
+    # SecRuleUpdateActionById 959100 "t:none,redirect:'http://example.com/report_problem'"
+
+    # Example: send an error 404
+    #
+    # SecRuleUpdateActionById 949110 "t:none,deny,status:404"
+    # SecRuleUpdateActionById 959100 "t:none,deny,status:404"
+
+    # Example: drop the connection (best for DoS attacks)
+    #
+    # SecRuleUpdateActionById 949110 "t:none,drop"
+    # SecRuleUpdateActionById 959100 "t:none,drop"
+  crs-setup.conf: |
+    # ------------------------------------------------------------------------
+    # OWASP ModSecurity Core Rule Set ver.3.3.2
+    # Copyright (c) 2006-2020 Trustwave and contributors. All rights reserved.
+    #
+    # The OWASP ModSecurity Core Rule Set is distributed under
+    # Apache Software License (ASL) version 2
+    # Please see the enclosed LICENSE file for full details.
+    # ------------------------------------------------------------------------
+
+
+    #
+    # -- [[ Introduction ]] --------------------------------------------------------
+    #
+    # The OWASP ModSecurity Core Rule Set (CRS) is a set of generic attack
+    # detection rules that provide a base level of protection for any web
+    # application. They are written for the open source, cross-platform
+    # ModSecurity Web Application Firewall.
+    #
+    # See also:
+    # https://coreruleset.org/
+    # https://github.com/SpiderLabs/owasp-modsecurity-crs
+    # https://www.owasp.org/index.php/Category:OWASP_ModSecurity_Core_Rule_Set_Project
+    #
+
+
+    #
+    # -- [[ System Requirements ]] -------------------------------------------------
+    #
+    # CRS requires ModSecurity version 2.8.0 or above.
+    # We recommend to always use the newest ModSecurity version.
+    #
+    # The configuration directives/settings in this file are used to control
+    # the OWASP ModSecurity CRS. These settings do **NOT** configure the main
+    # ModSecurity settings (modsecurity.conf) such as SecRuleEngine,
+    # SecRequestBodyAccess, SecAuditEngine, SecDebugLog, and XML processing.
+    #
+    # The CRS assumes that modsecurity.conf has been loaded. It is bundled with
+    # ModSecurity. If you don't have it, you can get it from:
+    # 2.x: https://raw.githubusercontent.com/SpiderLabs/ModSecurity/v2/master/modsecurity.conf-recommended
+    # 3.x: https://raw.githubusercontent.com/SpiderLabs/ModSecurity/v3/master/modsecurity.conf-recommended
+    #
+    # The order of file inclusion in your webserver configuration should always be:
+    # 1. modsecurity.conf
+    # 2. crs-setup.conf (this file)
+    # 3. rules/*.conf (the CRS rule files)
+    #
+    # Please refer to the INSTALL file for detailed installation instructions.
+    #
+
+
+    #
+    # -- [[ Mode of Operation: Anomaly Scoring vs. Self-Contained ]] ---------------
+    #
+    # The CRS can run in two modes:
+    #
+    # -- [[ Anomaly Scoring Mode (default) ]] --
+    # In CRS3, anomaly mode is the default and recommended mode, since it gives the
+    # most accurate log information and offers the most flexibility in setting your
+    # blocking policies. It is also called "collaborative detection mode".
+    # In this mode, each matching rule increases an 'anomaly score'.
+    # At the conclusion of the inbound rules, and again at the conclusion of the
+    # outbound rules, the anomaly score is checked, and the blocking evaluation
+    # rules apply a disruptive action, by default returning an error 403.
+    #
+    # -- [[ Self-Contained Mode ]] --
+    # In this mode, rules apply an action instantly. This was the CRS2 default.
+    # It can lower resource usage, at the cost of less flexibility in blocking policy
+    # and less informative audit logs (only the first detected threat is logged).
+    # Rules inherit the disruptive action that you specify (i.e. deny, drop, etc).
+    # The first rule that matches will execute this action. In most cases this will
+    # cause evaluation to stop after the first rule has matched, similar to how many
+    # IDSs function.
+    #
+    # -- [[ Alert Logging Control ]] --
+    # In the mode configuration, you must also adjust the desired logging options.
+    # There are three common options for dealing with logging. By default CRS enables
+    # logging to the webserver error log (or Event viewer) plus detailed logging to
+    # the ModSecurity audit log (configured under SecAuditLog in modsecurity.conf).
+    #
+    # - To log to both error log and ModSecurity audit log file, use: "log,auditlog"
+    # - To log *only* to the ModSecurity audit log file, use: "nolog,auditlog"
+    # - To log *only* to the error log file, use: "log,noauditlog"
+    #
+    # Examples for the various modes follow.
+    # You must leave one of the following options enabled.
+    # Note that you must specify the same line for phase:1 and phase:2.
+    #
+
+    # Default: Anomaly Scoring mode, log to error log, log to ModSecurity audit log
+    # - By default, offending requests are blocked with an error 403 response.
+    # - To change the disruptive action, see RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf.example
+    #   and review section 'Changing the Disruptive Action for Anomaly Mode'.
+    # - In Apache, you can use ErrorDocument to show a friendly error page or
+    #   perform a redirect: https://httpd.apache.org/docs/2.4/custom-error.html
+    #
+    # SecDefaultAction "phase:1,log,auditlog,deny"
+    # SecDefaultAction "phase:2,log,auditlog,deny"
+
+    # Example: Anomaly Scoring mode, log only to ModSecurity audit log
+    # - By default, offending requests are blocked with an error 403 response.
+    # - To change the disruptive action, see RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf.example
+    #   and review section 'Changing the Disruptive Action for Anomaly Mode'.
+    # - In Apache, you can use ErrorDocument to show a friendly error page or
+    #   perform a redirect: https://httpd.apache.org/docs/2.4/custom-error.html
+    #
+    # SecDefaultAction "phase:1,nolog,auditlog,pass"
+    # SecDefaultAction "phase:2,nolog,auditlog,pass"
+
+    # Example: Self-contained mode, return error 403 on blocking
+    # - In this configuration the default disruptive action becomes 'deny'. After a
+    #   rule triggers, it will stop processing the request and return an error 403.
+    # - You can also use a different error status, such as 404, 406, et cetera.
+    # - In Apache, you can use ErrorDocument to show a friendly error page or
+    #   perform a redirect: https://httpd.apache.org/docs/2.4/custom-error.html
+    #
+    SecDefaultAction "phase:1,log,auditlog,deny,status:403"
+    SecDefaultAction "phase:2,log,auditlog,deny,status:403"
+
+    # Example: Self-contained mode, redirect back to homepage on blocking
+    # - In this configuration the 'tag' action includes the Host header data in the
+    #   log. This helps to identify which virtual host triggered the rule (if any).
+    # - Note that this might cause redirect loops in some situations; for example
+    #   if a Cookie or User-Agent header is blocked, it will also be blocked when
+    #   the client subsequently tries to access the homepage. You can also redirect
+    #   to another custom URL.
+    # SecDefaultAction "phase:1,log,auditlog,redirect:'http://%{request_headers.host}/',tag:'Host: %{request_headers.host}'"
+    # SecDefaultAction "phase:2,log,auditlog,redirect:'http://%{request_headers.host}/',tag:'Host: %{request_headers.host}'"
+
+
+    #
+    # -- [[ Paranoia Level Initialization ]] ---------------------------------------
+    #
+    # The Paranoia Level (PL) setting allows you to choose the desired level
+    # of rule checks that will add to your anomaly scores.
+    #
+    # With each paranoia level increase, the CRS enables additional rules
+    # giving you a higher level of security. However, higher paranoia levels
+    # also increase the possibility of blocking some legitimate traffic due to
+    # false alarms (also named false positives or FPs). If you use higher
+    # paranoia levels, it is likely that you will need to add some exclusion
+    # rules for certain requests and applications receiving complex input.
+    #
+    # - A paranoia level of 1 is default. In this level, most core rules
+    #   are enabled. PL1 is advised for beginners, installations
+    #   covering many different sites and applications, and for setups
+    #   with standard security requirements.
+    #   At PL1 you should face FPs rarely. If you encounter FPs, please
+    #   open an issue on the CRS GitHub site and don't forget to attach your
+    #   complete Audit Log record for the request with the issue.
+    # - Paranoia level 2 includes many extra rules, for instance enabling
+    #   many regexp-based SQL and XSS injection protections, and adding
+    #   extra keywords checked for code injections. PL2 is advised
+    #   for moderate to experienced users desiring more complete coverage
+    #   and for installations with elevated security requirements.
+    #   PL2 comes with some FPs which you need to handle.
+    # - Paranoia level 3 enables more rules and keyword lists, and tweaks
+    #   limits on special characters used. PL3 is aimed at users experienced
+    #   at the handling of FPs and at installations with a high security
+    #   requirement.
+    # - Paranoia level 4 further restricts special characters.
+    #   The highest level is advised for experienced users protecting
+    #   installations with very high security requirements. Running PL4 will
+    #   likely produce a very high number of FPs which have to be
+    #   treated before the site can go productive.
+    #
+    # All rules will log their PL to the audit log;
+    # example: [tag "paranoia-level/2"]. This allows you to deduct from the
+    # audit log how the WAF behavior is affected by paranoia level.
+    #
+    # It is important to also look into the variable
+    # tx.enforce_bodyproc_urlencoded (Enforce Body Processor URLENCODED)
+    # defined below. Enabling it closes a possible bypass of CRS.
+    #
+    # Uncomment this rule to change the default:
+    #
+    #SecAction \
+    #  "id:900000,\
+    #   phase:1,\
+    #   nolog,\
+    #   pass,\
+    #   t:none,\
+    #   setvar:tx.paranoia_level=1"
+
+
+    # It is possible to execute rules from a higher paranoia level but not include
+    # them in the anomaly scoring. This allows you to take a well-tuned system on
+    # paranoia level 1 and add rules from paranoia level 2 without having to fear
+    # the new rules would lead to false positives that raise your score above the
+    # threshold.
+    # This optional feature is enabled by uncommenting the following rule and
+    # setting the tx.executing_paranoia_level.
+    # Technically, rules up to the level defined in tx.executing_paranoia_level
+    # will be executed, but only the rules up to tx.paranoia_level affect the
+    # anomaly scores.
+    # By default, tx.executing_paranoia_level is set to tx.paranoia_level.
+    # tx.executing_paranoia_level must not be lower than tx.paranoia_level.
+    #
+    # Please notice that setting tx.executing_paranoia_level to a higher paranoia
+    # level results in a performance impact that is equally high as setting
+    # tx.paranoia_level to said level.
+    #
+    #SecAction \
+    #  "id:900001,\
+    #   phase:1,\
+    #   nolog,\
+    #   pass,\
+    #   t:none,\
+    #   setvar:tx.executing_paranoia_level=1"
+
+
+    #
+    # -- [[ Enforce Body Processor URLENCODED ]] -----------------------------------
+    #
+    # ModSecurity selects the body processor based on the Content-Type request
+    # header. But clients are not always setting the Content-Type header for their
+    # request body payloads. This will leave ModSecurity with limited vision into
+    # the payload.  The variable tx.enforce_bodyproc_urlencoded lets you force the
+    # URLENCODED body processor in these situations. This is off by default, as it
+    # implies a change of the behaviour of ModSecurity beyond CRS (the body
+    # processor applies to all rules, not only CRS) and because it may lead to
+    # false positives already on paranoia level 1. However, enabling this variable
+    # closes a possible bypass of CRS so it should be considered.
+    #
+    # Uncomment this rule to change the default:
+    #
+    #SecAction \
+    #  "id:900010,\
+    #   phase:1,\
+    #   nolog,\
+    #   pass,\
+    #   t:none,\
+    #   setvar:tx.enforce_bodyproc_urlencoded=1"
+
+
+    #
+    # -- [[ Anomaly Mode Severity Levels ]] ----------------------------------------
+    #
+    # Each rule in the CRS has an associated severity level.
+    # These are the default scoring points for each severity level.
+    # These settings will be used to increment the anomaly score if a rule matches.
+    # You may adjust these points to your liking, but this is usually not needed.
+    #
+    # - CRITICAL severity: Anomaly Score of 5.
+    #       Mostly generated by the application attack rules (93x and 94x files).
+    # - ERROR severity: Anomaly Score of 4.
+    #       Generated mostly from outbound leakage rules (95x files).
+    # - WARNING severity: Anomaly Score of 3.
+    #       Generated mostly by malicious client rules (91x files).
+    # - NOTICE severity: Anomaly Score of 2.
+    #       Generated mostly by the protocol rules (92x files).
+    #
+    # In anomaly mode, these scores are cumulative.
+    # So it's possible for a request to hit multiple rules.
+    #
+    # (Note: In this file, we use 'phase:1' to set CRS configuration variables.
+    # In general, 'phase:request' is used. However, we want to make absolutely sure
+    # that all configuration variables are set before the CRS rules are processed.)
+    #
+    #SecAction \
+    # "id:900100,\
+    #  phase:1,\
+    #  nolog,\
+    #  pass,\
+    #  t:none,\
+    #  setvar:tx.critical_anomaly_score=5,\
+    #  setvar:tx.error_anomaly_score=4,\
+    #  setvar:tx.warning_anomaly_score=3,\
+    #  setvar:tx.notice_anomaly_score=2"
+
+
+    #
+    # -- [[ Anomaly Mode Blocking Threshold Levels ]] ------------------------------
+    #
+    # Here, you can specify at which cumulative anomaly score an inbound request,
+    # or outbound response, gets blocked.
+    #
+    # Most detected inbound threats will give a critical score of 5.
+    # Smaller violations, like violations of protocol/standards, carry lower scores.
+    #
+    # [ At default value ]
+    # If you keep the blocking thresholds at the defaults, the CRS will work
+    # similarly to previous CRS versions: a single critical rule match will cause
+    # the request to be blocked and logged.
+    #
+    # [ Using higher values ]
+    # If you want to make the CRS less sensitive, you can increase the blocking
+    # thresholds, for instance to 7 (which would require multiple rule matches
+    # before blocking) or 10 (which would require at least two critical alerts - or
+    # a combination of many lesser alerts), or even higher. However, increasing the
+    # thresholds might cause some attacks to bypass the CRS rules or your policies.
+    #
+    # [ New deployment strategy: Starting high and decreasing ]
+    # It is a common practice to start a fresh CRS installation with elevated
+    # anomaly scoring thresholds (>100) and then lower the limits as your
+    # confidence in the setup grows. You may also look into the Sampling
+    # Percentage section below for a different strategy to ease into a new
+    # CRS installation.
+    #
+    # [ Anomaly Threshold / Paranoia Level Quadrant ]
+    #
+    #     High Anomaly Limit   |   High Anomaly Limit
+    #     Low Paranoia Level   |   High Paranoia Level
+    #     -> Fresh Site        |   -> Experimental Site
+    # ------------------------------------------------------
+    #     Low Anomaly Limit    |   Low Anomaly Limit
+    #     Low Paranoia Level   |   High Paranoia Level
+    #     -> Standard Site     |   -> High Security Site
+    #
+    # Uncomment this rule to change the defaults:
+    #
+    #SecAction \
+    # "id:900110,\
+    #  phase:1,\
+    #  nolog,\
+    #  pass,\
+    #  t:none,\
+    #  setvar:tx.inbound_anomaly_score_threshold=5,\
+    #  setvar:tx.outbound_anomaly_score_threshold=4"
+
+    #
+    # -- [[ Application Specific Rule Exclusions ]] ----------------------------------------
+    #
+    # Some well-known applications may undertake actions that appear to be
+    # malicious. This includes actions such as allowing HTML or Javascript within
+    # parameters. In such cases the CRS aims to prevent false positives by allowing
+    # administrators to enable prebuilt, application specific exclusions on an
+    # application by application basis.
+    # These application specific exclusions are distinct from the rules that would
+    # be placed in the REQUEST-900-EXCLUSION-RULES-BEFORE-CRS configuration file as
+    # they are prebuilt for specific applications. The 'REQUEST-900' file is
+    # designed for users to add their own custom exclusions. Note, using these
+    # application specific exclusions may loosen restrictions of the CRS,
+    # especially if used with an application they weren't designed for. As a result
+    # they should be applied with care.
+    # To use this functionality you must specify a supported application. To do so
+    # uncomment rule 900130. In addition to uncommenting the rule you will need to
+    # specify which application(s) you'd like to enable exclusions for. Only a
+    # (very) limited set of applications are currently supported, please use the
+    # filenames prefixed with 'REQUEST-903' to guide you in your selection.
+    # Such filenames use the following convention:
+    # REQUEST-903.9XXX-{APPNAME}-EXCLUSIONS-RULES.conf
+    #
+    # It is recommended if you run multiple web applications on your site to limit
+    # the effects of the exclusion to only the path where the excluded webapp
+    # resides using a rule similar to the following example:
+    # SecRule REQUEST_URI "@beginsWith /wordpress/" setvar:tx.crs_exclusions_wordpress=1
+
+    #
+    # Modify and uncomment this rule to select which application:
+    #
+    #SecAction \
+    # "id:900130,\
+    #  phase:1,\
+    #  nolog,\
+    #  pass,\
+    #  t:none,\
+    #  setvar:tx.crs_exclusions_cpanel=1,\
+    #  setvar:tx.crs_exclusions_drupal=1,\
+    #  setvar:tx.crs_exclusions_dokuwiki=1,\
+    #  setvar:tx.crs_exclusions_nextcloud=1,\
+    #  setvar:tx.crs_exclusions_wordpress=1,\
+    #  setvar:tx.crs_exclusions_xenforo=1"
+
+    #
+    # -- [[ HTTP Policy Settings ]] ------------------------------------------------
+    #
+    # This section defines your policies for the HTTP protocol, such as:
+    # - allowed HTTP versions, HTTP methods, allowed request Content-Types
+    # - forbidden file extensions (e.g. .bak, .sql) and request headers (e.g. Proxy)
+    #
+    # These variables are used in the following rule files:
+    # - REQUEST-911-METHOD-ENFORCEMENT.conf
+    # - REQUEST-912-DOS-PROTECTION.conf
+    # - REQUEST-920-PROTOCOL-ENFORCEMENT.conf
+
+    # HTTP methods that a client is allowed to use.
+    # Default: GET HEAD POST OPTIONS
+    # Example: for RESTful APIs, add the following methods: PUT PATCH DELETE
+    # Example: for WebDAV, add the following methods: CHECKOUT COPY DELETE LOCK
+    #          MERGE MKACTIVITY MKCOL MOVE PROPFIND PROPPATCH PUT UNLOCK
+    # Uncomment this rule to change the default.
+    #SecAction \
+    # "id:900200,\
+    #  phase:1,\
+    #  nolog,\
+    #  pass,\
+    #  t:none,\
+    #  setvar:'tx.allowed_methods=GET HEAD POST OPTIONS'"
+
+    # Content-Types that a client is allowed to send in a request.
+    # Default: |application/x-www-form-urlencoded| |multipart/form-data| |multipart/related|
+    # |text/xml| |application/xml| |application/soap+xml| |application/x-amf| |application/json|
+    # |application/cloudevents+json| |application/cloudevents-batch+json| |application/octet-stream|
+    # |application/csp-report| |application/xss-auditor-report| |text/plain|
+    # Uncomment this rule to change the default.
+    #SecAction \
+    # "id:900220,\
+    #  phase:1,\
+    #  nolog,\
+    #  pass,\
+    #  t:none,\
+    #  setvar:'tx.allowed_request_content_type=|application/x-www-form-urlencoded| |multipart/form-data| |multipart/related| |text/xml| |application/xml| |application/soap+xml| |application/x-amf| |application/json| |application/cloudevents+json| |application/cloudevents-batch+json| |application/octet-stream| |application/csp-report| |application/xss-auditor-report| |text/plain|'"
+
+    # Allowed HTTP versions.
+    # Default: HTTP/1.0 HTTP/1.1 HTTP/2 HTTP/2.0
+    # Example for legacy clients: HTTP/0.9 HTTP/1.0 HTTP/1.1 HTTP/2 HTTP/2.0
+    # Note that some web server versions use 'HTTP/2', some 'HTTP/2.0', so
+    # we include both version strings by default.
+    # Uncomment this rule to change the default.
+    #SecAction \
+    # "id:900230,\
+    #  phase:1,\
+    #  nolog,\
+    #  pass,\
+    #  t:none,\
+    #  setvar:'tx.allowed_http_versions=HTTP/1.0 HTTP/1.1 HTTP/2 HTTP/2.0'"
+
+    # Forbidden file extensions.
+    # Guards against unintended exposure of development/configuration files.
+    # Default: .asa/ .asax/ .ascx/ .axd/ .backup/ .bak/ .bat/ .cdx/ .cer/ .cfg/ .cmd/ .com/ .config/ .conf/ .cs/ .csproj/ .csr/ .dat/ .db/ .dbf/ .dll/ .dos/ .htr/ .htw/ .ida/ .idc/ .idq/ .inc/ .ini/ .key/ .licx/ .lnk/ .log/ .mdb/ .old/ .pass/ .pdb/ .pol/ .printer/ .pwd/ .rdb/ .resources/ .resx/ .sql/ .swp/ .sys/ .vb/ .vbs/ .vbproj/ .vsdisco/ .webinfo/ .xsd/ .xsx/
+    # Example: .bak/ .config/ .conf/ .db/ .ini/ .log/ .old/ .pass/ .pdb/ .rdb/ .sql/
+    # Uncomment this rule to change the default.
+    #SecAction \
+    # "id:900240,\
+    #  phase:1,\
+    #  nolog,\
+    #  pass,\
+    #  t:none,\
+    #  setvar:'tx.restricted_extensions=.asa/ .asax/ .ascx/ .axd/ .backup/ .bak/ .bat/ .cdx/ .cer/ .cfg/ .cmd/ .com/ .config/ .conf/ .cs/ .csproj/ .csr/ .dat/ .db/ .dbf/ .dll/ .dos/ .htr/ .htw/ .ida/ .idc/ .idq/ .inc/ .ini/ .key/ .licx/ .lnk/ .log/ .mdb/ .old/ .pass/ .pdb/ .pol/ .printer/ .pwd/ .rdb/ .resources/ .resx/ .sql/ .swp/ .sys/ .vb/ .vbs/ .vbproj/ .vsdisco/ .webinfo/ .xsd/ .xsx/'"
+
+    # Forbidden request headers.
+    # Header names should be lowercase, enclosed by /slashes/ as delimiters.
+    # Blocking Proxy header prevents 'httpoxy' vulnerability: https://httpoxy.org
+    # Default: /proxy/ /lock-token/ /content-range/ /if/
+    # Uncomment this rule to change the default.
+    #SecAction \
+    # "id:900250,\
+    #  phase:1,\
+    #  nolog,\
+    #  pass,\
+    #  t:none,\
+    #  setvar:'tx.restricted_headers=/proxy/ /lock-token/ /content-range/ /if/'"
+
+    # File extensions considered static files.
+    # Extensions include the dot, lowercase, enclosed by /slashes/ as delimiters.
+    # Used in DoS protection rule. See section "Anti-Automation / DoS Protection".
+    # Default: /.jpg/ /.jpeg/ /.png/ /.gif/ /.js/ /.css/ /.ico/ /.svg/ /.webp/
+    # Uncomment this rule to change the default.
+    #SecAction \
+    # "id:900260,\
+    #  phase:1,\
+    #  nolog,\
+    #  pass,\
+    #  t:none,\
+    #  setvar:'tx.static_extensions=/.jpg/ /.jpeg/ /.png/ /.gif/ /.js/ /.css/ /.ico/ /.svg/ /.webp/'"
+
+    # Content-Types charsets that a client is allowed to send in a request.
+    # Default: utf-8|iso-8859-1|iso-8859-15|windows-1252
+    # Uncomment this rule to change the default.
+    # Use "|" to separate multiple charsets like in the rule defining
+    # tx.allowed_request_content_type.
+    #SecAction \
+    # "id:900280,\
+    #  phase:1,\
+    #  nolog,\
+    #  pass,\
+    #  t:none,\
+    #  setvar:'tx.allowed_request_content_type_charset=utf-8|iso-8859-1|iso-8859-15|windows-1252'"
+
+    #
+    # -- [[ HTTP Argument/Upload Limits ]] -----------------------------------------
+    #
+    # Here you can define optional limits on HTTP get/post parameters and uploads.
+    # This can help to prevent application specific DoS attacks.
+    #
+    # These values are checked in REQUEST-920-PROTOCOL-ENFORCEMENT.conf.
+    # Beware of blocking legitimate traffic when enabling these limits.
+    #
+
+    # Block request if number of arguments is too high
+    # Default: unlimited
+    # Example: 255
+    # Uncomment this rule to set a limit.
+    #SecAction \
+    # "id:900300,\
+    #  phase:1,\
+    #  nolog,\
+    #  pass,\
+    #  t:none,\
+    #  setvar:tx.max_num_args=255"
+
+    # Block request if the length of any argument name is too high
+    # Default: unlimited
+    # Example: 100
+    # Uncomment this rule to set a limit.
+    #SecAction \
+    # "id:900310,\
+    #  phase:1,\
+    #  nolog,\
+    #  pass,\
+    #  t:none,\
+    #  setvar:tx.arg_name_length=100"
+
+    # Block request if the length of any argument value is too high
+    # Default: unlimited
+    # Example: 400
+    # Uncomment this rule to set a limit.
+    #SecAction \
+    # "id:900320,\
+    #  phase:1,\
+    #  nolog,\
+    #  pass,\
+    #  t:none,\
+    #  setvar:tx.arg_length=400"
+
+    # Block request if the total length of all combined arguments is too high
+    # Default: unlimited
+    # Example: 64000
+    # Uncomment this rule to set a limit.
+    #SecAction \
+    # "id:900330,\
+    #  phase:1,\
+    #  nolog,\
+    #  pass,\
+    #  t:none,\
+    #  setvar:tx.total_arg_length=64000"
+
+    # Block request if the file size of any individual uploaded file is too high
+    # Default: unlimited
+    # Example: 1048576
+    # Uncomment this rule to set a limit.
+    #SecAction \
+    # "id:900340,\
+    #  phase:1,\
+    #  nolog,\
+    #  pass,\
+    #  t:none,\
+    #  setvar:tx.max_file_size=1048576"
+
+    # Block request if the total size of all combined uploaded files is too high
+    # Default: unlimited
+    # Example: 1048576
+    # Uncomment this rule to set a limit.
+    #SecAction \
+    # "id:900350,\
+    #  phase:1,\
+    #  nolog,\
+    #  pass,\
+    #  t:none,\
+    #  setvar:tx.combined_file_sizes=1048576"
+
+
+    #
+    # -- [[ Easing In / Sampling Percentage ]] -------------------------------------
+    #
+    # Adding the Core Rule Set to an existing productive site can lead to false
+    # positives, unexpected performance issues and other undesired side effects.
+    #
+    # It can be beneficial to test the water first by enabling the CRS for a
+    # limited number of requests only and then, when you have solved the issues (if
+    # any) and you have confidence in the setup, to raise the ratio of requests
+    # being sent into the ruleset.
+    #
+    # Adjust the percentage of requests that are funnelled into the Core Rules by
+    # setting TX.sampling_percentage below. The default is 100, meaning that every
+    # request gets checked by the CRS.  The selection of requests, which are going
+    # to be checked, is based on a pseudo random number generated by ModSecurity.
+    #
+    # If a request is allowed to pass without being checked by the CRS, there is no
+    # entry in the audit log (for performance reasons), but an error log entry is
+    # written.  If you want to disable the error log entry, then issue the
+    # following directive somewhere after the inclusion of the CRS
+    # (E.g., RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf).
+    #
+    # SecRuleUpdateActionById 901150 "nolog"
+    #
+    # ATTENTION: If this TX.sampling_percentage is below 100, then some of the
+    # requests will bypass the Core Rules completely and you lose the ability to
+    # protect your service with ModSecurity.
+    #
+    # Uncomment this rule to enable this feature:
+    #
+    #SecAction "id:900400,\
+    #  phase:1,\
+    #  pass,\
+    #  nolog,\
+    #  setvar:tx.sampling_percentage=100"
+
+
+    #
+    # -- [[ Project Honey Pot HTTP Blacklist ]] ------------------------------------
+    #
+    # Optionally, you can check the client IP address against the Project Honey Pot
+    # HTTPBL (dnsbl.httpbl.org). In order to use this, you need to register to get a
+    # free API key. Set it here with SecHttpBlKey.
+    #
+    # Project Honeypot returns multiple different malicious IP types.
+    # You may specify which you want to block by enabling or disabling them below.
+    #
+    # Ref: https://www.projecthoneypot.org/httpbl.php
+    # Ref: https://github.com/SpiderLabs/ModSecurity/wiki/Reference-Manual#wiki-SecHttpBlKey
+    #
+    # Uncomment these rules to use this feature:
+    #
+    #SecHttpBlKey XXXXXXXXXXXXXXXXX
+    #SecAction "id:900500,\
+    #  phase:1,\
+    #  nolog,\
+    #  pass,\
+    #  t:none,\
+    #  setvar:tx.block_search_ip=1,\
+    #  setvar:tx.block_suspicious_ip=1,\
+    #  setvar:tx.block_harvester_ip=1,\
+    #  setvar:tx.block_spammer_ip=1"
+
+
+    #
+    # -- [[ GeoIP Database ]] ------------------------------------------------------
+    #
+    # There are some rulesets that inspect geolocation data of the client IP address
+    # (geoLookup). The CRS uses geoLookup to implement optional country blocking.
+    #
+    # To use geolocation, we make use of the MaxMind GeoIP database.
+    # This database is not included with the CRS and must be downloaded.
+    #
+    # There are two formats for the GeoIP database. ModSecurity v2 uses GeoLite (.dat files),
+    # and ModSecurity v3 uses GeoLite2 (.mmdb files).
+    #
+    # If you use ModSecurity 3, MaxMind provides a binary for updating GeoLite2 files,
+    # see https://github.com/maxmind/geoipupdate.
+    #
+    # Download the package for your OS, and read https://dev.maxmind.com/geoip/geoipupdate/
+    # for configuration options.
+    #
+    # Warning: GeoLite (not GeoLite2) databases are considered legacy, and not being updated anymore.
+    # See https://support.maxmind.com/geolite-legacy-discontinuation-notice/ for more info.
+    #
+    # Therefore, if you use ModSecurity v2, you need to regenerate updated .dat files
+    # from CSV files first.
+    #
+    # You can achieve this using https://github.com/sherpya/geolite2legacy
+    # Pick the zip files from maxmind site:
+    # https://geolite.maxmind.com/download/geoip/database/GeoLite2-Country-CSV.zip
+    #
+    # Follow the guidelines for installing the tool and run:
+    # ./geolite2legacy.py -i GeoLite2-Country-CSV.zip \
+    #                     -f geoname2fips.csv -o /usr/share/GeoliteCountry.dat
+    #
+    # Update the database regularly, see Step 3 of the configuration link above.
+    #
+    # By default, when you execute `sudo geoipupdate` on Linux, files from the free database
+    # will be downloaded to `/usr/share/GeoIP` (both v1 and v2).
+    #
+    # Then choose from:
+    #   - `GeoLite2-Country.mmdb` (if you are using ModSecurity v3)
+    #   - `GeoLiteCountry.dat`    (if you are using ModSecurity v2)
+    #
+    # Ref: http://blog.spiderlabs.com/2010/10/detecting-malice-with-modsecurity-geolocation-data.html
+    # Ref: http://blog.spiderlabs.com/2010/11/detecting-malice-with-modsecurity-ip-forensics.html
+    #
+    # Uncomment only one of the next rules here to use this feature.
+    # Choose the one depending on the ModSecurity version you are using, and change the path accordingly:
+    #
+    # For ModSecurity v3:
+    #SecGeoLookupDB /usr/share/GeoIP/GeoLite2-Country.mmdb
+    # For ModSecurity v2 (points to the converted one):
+    #SecGeoLookupDB /usr/share/GeoIP/GeoLiteCountry.dat
+
+    #
+    # -=[ Block Countries ]=-
+    #
+    # Rules in the IP Reputation file can check the client against a list of high
+    # risk country codes. These countries have to be defined in the variable
+    # tx.high_risk_country_codes via their ISO 3166 two-letter country code:
+    # https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2#Officially_assigned_code_elements
+    #
+    # If you are sure that you are not getting any legitimate requests from a given
+    # country, then you can disable all access from that country via this variable.
+    # The rule performing the test has the rule id 910100.
+    #
+    # This rule requires SecGeoLookupDB to be enabled and the GeoIP database to be
+    # downloaded (see the section "GeoIP Database" above.)
+    #
+    # By default, the list is empty. A list used by some sites was the following:
+    # setvar:'tx.high_risk_country_codes=UA ID YU LT EG RO BG TR RU PK MY CN'"
+    #
+    # Uncomment this rule to use this feature:
+    #
+    #SecAction \
+    # "id:900600,\
+    #  phase:1,\
+    #  nolog,\
+    #  pass,\
+    #  t:none,\
+    #  setvar:'tx.high_risk_country_codes='"
+
+
+    #
+    # -- [[ Anti-Automation / DoS Protection ]] ------------------------------------
+    #
+    # Optional DoS protection against clients making requests too quickly.
+    #
+    # When a client is making more than 100 requests (excluding static files) within
+    # 60 seconds, this is considered a 'burst'. After two bursts, the client is
+    # blocked for 600 seconds.
+    #
+    # Requests to static files are not counted towards DoS; they are listed in the
+    # 'tx.static_extensions' setting, which you can change in this file (see
+    # section "HTTP Policy Settings").
+    #
+    # For a detailed description, see rule file REQUEST-912-DOS-PROTECTION.conf.
+    #
+    # Uncomment this rule to use this feature:
+    #
+    #SecAction \
+    # "id:900700,\
+    #  phase:1,\
+    #  nolog,\
+    #  pass,\
+    #  t:none,\
+    #  setvar:'tx.dos_burst_time_slice=60',\
+    #  setvar:'tx.dos_counter_threshold=100',\
+    #  setvar:'tx.dos_block_timeout=600'"
+
+
+    #
+    # -- [[ Check UTF-8 encoding ]] ------------------------------------------------
+    #
+    # The CRS can optionally check request contents for invalid UTF-8 encoding.
+    # We only want to apply this check if UTF-8 encoding is actually used by the
+    # site; otherwise it will result in false positives.
+    #
+    # Uncomment this rule to use this feature:
+    #
+    #SecAction \
+    # "id:900950,\
+    #  phase:1,\
+    #  nolog,\
+    #  pass,\
+    #  t:none,\
+    #  setvar:tx.crs_validate_utf8_encoding=1"
+
+
+    #
+    # -- [[ Blocking Based on IP Reputation ]] ------------------------------------
+    #
+    # Blocking based on reputation is permanent in the CRS. Unlike other rules,
+    # which look at the individual request, the blocking of IPs is based on
+    # a persistent record in the IP collection, which remains active for a
+    # certain amount of time.
+    #
+    # There are two ways an individual client can become flagged for blocking:
+    # - External information (RBL, GeoIP, etc.)
+    # - Internal information (Core Rules)
+    #
+    # The record in the IP collection carries a flag, which tags requests from
+    # individual clients with a flag named IP.reput_block_flag.
+    # But the flag alone is not enough to have a client blocked. There is also
+    # a global switch named tx.do_reput_block. This is off by default. If you set
+    # it to 1 (=On), requests from clients with the IP.reput_block_flag will
+    # be blocked for a certain duration.
+    #
+    # Variables
+    # ip.reput_block_flag      Blocking flag for the IP collection record
+    # ip.reput_block_reason    Reason (= rule message) that caused to blocking flag
+    # tx.do_reput_block        Switch deciding if we really block based on flag
+    # tx.reput_block_duration  Setting to define the duration of a block
+    #
+    # It may be important to know, that all the other core rules are skipped for
+    # requests, when it is clear that they carry the blocking flag in question.
+    #
+    # Uncomment this rule to use this feature:
+    #
+    #SecAction \
+    # "id:900960,\
+    #  phase:1,\
+    #  nolog,\
+    #  pass,\
+    #  t:none,\
+    #  setvar:tx.do_reput_block=1"
+    #
+    # Uncomment this rule to change the blocking time:
+    # Default: 300 (5 minutes)
+    #
+    #SecAction \
+    # "id:900970,\
+    #  phase:1,\
+    #  nolog,\
+    #  pass,\
+    #  t:none,\
+    #  setvar:tx.reput_block_duration=300"
+
+
+    #
+    # -- [[ Collection timeout ]] --------------------------------------------------
+    #
+    # Set the SecCollectionTimeout directive from the ModSecurity default (1 hour)
+    # to a lower setting which is appropriate to most sites.
+    # This increases performance by cleaning out stale collection (block) entries.
+    #
+    # This value should be greater than or equal to:
+    # tx.reput_block_duration (see section "Blocking Based on IP Reputation") and
+    # tx.dos_block_timeout (see section "Anti-Automation / DoS Protection").
+    #
+    # Ref: https://github.com/SpiderLabs/ModSecurity/wiki/Reference-Manual#wiki-SecCollectionTimeout
+
+    # Please keep this directive uncommented.
+    # Default: 600 (10 minutes)
+    SecCollectionTimeout 600
+
+
+    #
+    # -- [[ End of setup ]] --------------------------------------------------------
+    #
+    # The CRS checks the tx.crs_setup_version variable to ensure that the setup
+    # has been loaded. If you are not planning to use this setup template,
+    # you must manually set the tx.crs_setup_version variable before including
+    # the CRS rules/* files.
+    #
+    # The variable is a numerical representation of the CRS version number.
+    # E.g., v3.0.0 is represented as 300.
+    #
+    SecAction \
+        "id:900990,\
+        phase:1,\
+        nolog,\
+        pass,\
+        t:none,\
+        setvar:tx.crs_setup_version=332"
+  modsecdefault.conf: "\n# -- Rule engine initialization ----------------------------------------------\n\n#
+    Enable ModSecurity, attaching it to every transaction. Use detection\n# only to
+    start with, because that minimises the chances of post-installation\n# disruption.\n#\n#SecRuleEngine
+    DetectionOnly\nSecRuleEngine On\n\n\n# -- Request body handling ---------------------------------------------------\n\n#
+    Allow ModSecurity to access request bodies. If you don't, ModSecurity\n# won't
+    be able to see any POST parameters, which opens a large security\n# hole for attackers
+    to exploit.\n#\nSecRequestBodyAccess On\n\n\n# Enable XML request body parser.\n#
+    Initiate XML Processor in case of xml content-type\n#\nSecRule REQUEST_HEADERS:Content-Type
+    \"text/xml\" \\\n     \"id:'200000',phase:1,t:none,t:lowercase,pass,nolog,ctl:requestBodyProcessor=XML\"\n\n#
+    Enable JSON request body parser.\n# Initiate JSON Processor in case of JSON content-type;
+    change accordingly\n# if your application does not use 'application/json'\n#\nSecRule
+    REQUEST_HEADERS:Content-Type \"application/json\" \\\n     \"id:'200001',phase:1,t:none,t:lowercase,pass,nolog,ctl:requestBodyProcessor=JSON\"\n\n#
+    Maximum request body size we will accept for buffering. If you support\n# file
+    uploads then the value given on the first line has to be as large\n# as the largest
+    file you are willing to accept. The second value refers\n# to the size of data,
+    with files excluded. You want to keep that value as\n# low as practical.\n#\n\n#
+    Store up to 128 KB of request body data in memory. When the multipart\n# parser
+    reachers this limit, it will start using your hard disk for\n# storage. That is
+    slow, but unavoidable.\n#\n\n# What do do if the request body size is above our
+    configured limit.\n# Keep in mind that this setting will automatically be set
+    to ProcessPartial\n# when SecRuleEngine is set to DetectionOnly mode in order
+    to minimize\n# disruptions when initially deploying ModSecurity.\n#\nSecRequestBodyLimitAction
+    Reject\n\n# Verify that we've correctly processed the request body.\n# As a rule
+    of thumb, when failing to process a request body\n# you should reject the request
+    (when deployed in blocking mode)\n# or log a high-severity alert (when deployed
+    in detection-only mode).\n#\nSecRule REQBODY_ERROR \"!@eq 0\" \\\n\"id:'200002',
+    phase:2,t:none,log,deny,status:400,msg:'Failed to parse request body.',logdata:'%{reqbody_error_msg}',severity:2\"\n\n#
+    By default be strict with what we accept in the multipart/form-data\n# request
+    body. If the rule below proves to be too strict for your\n# environment consider
+    changing it to detection-only. You are encouraged\n# _not_ to remove it altogether.\n#\nSecRule
+    MULTIPART_STRICT_ERROR \"!@eq 0\" \\\n\"id:'200003',phase:2,t:none,log,deny,status:400,
+    \\\nmsg:'Multipart request body failed strict validation: \\\nPE %{REQBODY_PROCESSOR_ERROR},
+    \\\nBQ %{MULTIPART_BOUNDARY_QUOTED}, \\\nBW %{MULTIPART_BOUNDARY_WHITESPACE},
+    \\\nDB %{MULTIPART_DATA_BEFORE}, \\\nDA %{MULTIPART_DATA_AFTER}, \\\nHF %{MULTIPART_HEADER_FOLDING},
+    \\\nLF %{MULTIPART_LF_LINE}, \\\nSM %{MULTIPART_MISSING_SEMICOLON}, \\\nIQ %{MULTIPART_INVALID_QUOTING},
+    \\\nIP %{MULTIPART_INVALID_PART}, \\\nIH %{MULTIPART_INVALID_HEADER_FOLDING},
+    \\\nFL %{MULTIPART_FILE_LIMIT_EXCEEDED}'\"\n\n# Did we see anything that might
+    be a boundary?\n#\nSecRule MULTIPART_UNMATCHED_BOUNDARY \"!@eq 0\" \\\n\"id:'200004',phase:2,t:none,log,deny,msg:'Multipart
+    parser detected a possible unmatched boundary.'\"\n\n# PCRE Tuning\n# We want
+    to avoid a potential RegEx DoS condition\n#\nSecPcreMatchLimit 1000\nSecPcreMatchLimitRecursion
+    1000\n\n# Some internal errors will set flags in TX and we will need to look for
+    these.\n# All of these are prefixed with \"MSC_\".  The following flags currently
+    exist:\n#\n# MSC_PCRE_LIMITS_EXCEEDED: PCRE match limits were exceeded.\n#\nSecRule
+    TX:/^MSC_/ \"!@streq 0\" \\\n        \"id:'200005',phase:2,t:none,deny,msg:'ModSecurity
+    internal error flagged: %{MATCHED_VAR_NAME}'\"\n\n\n# -- Response body handling
+    --------------------------------------------------\n\n# Allow ModSecurity to access
+    response bodies. \n# You should have this directive enabled in order to identify
+    errors\n# and data leakage issues.\n# \n# Do keep in mind that enabling this directive
+    does increases both\n# memory consumption and response latency.\n#\nSecResponseBodyAccess
+    On\n\n# Which response MIME types do you want to inspect? You should adjust the\n#
+    configuration below to catch documents but avoid static files\n# (e.g., images
+    and archives).\n#\nSecResponseBodyMimeType text/plain text/html text/xml\n\n#
+    Buffer response bodies of up to 512 KB in length.\nSecResponseBodyLimit 524288\n\n#
+    What happens when we encounter a response body larger than the configured\n# limit?
+    By default, we process what we have and let the rest through.\n# That's somewhat
+    less secure, but does not break any legitimate pages.\n#\nSecResponseBodyLimitAction
+    ProcessPartial\n\n\n# -- Filesystem configuration ------------------------------------------------\n\n#
+    The location where ModSecurity stores temporary files (for example, when\n# it
+    needs to handle a file upload that is larger than the configured limit).\n# \n#
+    This default setting is chosen due to all systems have /tmp available however,
+    \n# this is less than ideal. It is recommended that you specify a location that's
+    private.\n#\nSecTmpDir /tmp/\n\n# The location where ModSecurity will keep its
+    persistent data.  This default setting \n# is chosen due to all systems have /tmp
+    available however, it\n# too should be updated to a place that other users can't
+    access.\n#\nSecDataDir /tmp/\n\n\n# -- File uploads handling configuration -------------------------------------\n\n#
+    The location where ModSecurity stores intercepted uploaded files. This\n# location
+    must be private to ModSecurity. You don't want other users on\n# the server to
+    access the files, do you?\n#\n#SecUploadDir /opt/modsecurity/var/upload/\n\n#
+    By default, only keep the files that were determined to be unusual\n# in some
+    way (by an external inspection script). For this to work you\n# will also need
+    at least one file inspection rule.\n#\n#SecUploadKeepFiles RelevantOnly\n\n# Uploaded
+    files are by default created with permissions that do not allow\n# any other user
+    to access them. You may need to relax that if you want to\n# interface ModSecurity
+    to an external program (e.g., an anti-virus).\n#\n#SecUploadFileMode 0600\n\n\n#
+    -- Debug log configuration -------------------------------------------------\n\n#
+    The default debug log configuration is to duplicate the error, warning\n# and
+    notice messages from the error log.\n#\n#SecDebugLog /opt/modsecurity/var/log/debug.log\n#SecDebugLogLevel
+    3\nSecDebugLog /tmp/modsecurity_debug.log\nSecDebugLogLevel 9\n\n\n# -- Audit
+    log configuration -------------------------------------------------\n\n# Log the
+    transactions that are marked by a rule, as well as those that\n# trigger a server
+    error (determined by a 5xx or 4xx, excluding 404,  \n# level response status codes).\n#\nSecAuditEngine
+    RelevantOnly\nSecAuditLogRelevantStatus \"^(?:5|4(?!04))\"\n\n# Log everything
+    we know about a transaction.\nSecAuditLogParts ABIJDEFHZ\n\n# Use a single file
+    for logging. This is much easier to look at, but\n# assumes that you will use
+    the audit log only ocassionally.\n#\nSecAuditLogType Serial\nSecAuditLog /tmp/modsec_audit.log\n\n#
+    Specify the path for concurrent audit logging.\n#SecAuditLogStorageDir /opt/modsecurity/var/audit/\n\n\n#
+    -- Miscellaneous -----------------------------------------------------------\n\n#
+    Use the most commonly used application/x-www-form-urlencoded parameter\n# separator.
+    There's probably only one application somewhere that uses\n# something else so
+    don't expect to change this value.\n#\nSecArgumentSeparator &\n\n# Settle on version
+    0 (zero) cookies, as that is what most applications\n# use. Using an incorrect
+    cookie version may open your installation to\n# evasion attacks (against the rules
+    that examine named cookies).\n#\nSecCookieFormat 0\n\n# Specify your Unicode Code
+    Point.\n# This mapping is used by the t:urlDecodeUni transformation function\n#
+    to properly map encoded data to your language. Properly setting\n# these directives
+    helps to reduce false positives and negatives.\n#\n#SecUnicodeMapFile unicode.mapping
+    20127\n\n# Improve the quality of ModSecurity by sharing information about your\n#
+    current ModSecurity version and dependencies versions.\n# The following information
+    will be shared: ModSecurity version,\n# Web Server version, APR version, PCRE
+    version, Lua version, Libxml2\n# version, Anonymous unique id for host.\nSecStatusEngine
+    On\n\n"
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: modsecurity-ruleset
+  namespace: tigera-operator

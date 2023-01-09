@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: attack
+  namespace: attack
+  labels:
+    app: attack
+spec:
+  containers:
+  - image: nicolaka/netshoot
+    command:
+      - sleep
+      - infinity
+    imagePullPolicy: IfNotPresent
+    name: attack
+  restartPolicy: Always

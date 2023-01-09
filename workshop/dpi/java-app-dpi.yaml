@@ -1,0 +1,7 @@
+apiVersion: projectcalico.org/v3
+kind: DeepPacketInspection
+metadata:
+  name: java-app-dpi
+  namespace: java-app
+spec:
+  selector: 'app == "java-app"'

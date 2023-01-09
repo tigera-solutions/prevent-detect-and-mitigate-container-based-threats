@@ -1,0 +1,24 @@
+apiVersion: projectcalico.org/v3
+kind: GlobalAlert
+metadata:
+  name: dns.suspicious-dns-query
+spec:
+  description: Generate alerts for all DNS lookups not in the domain set
+  summary: "[IoC] suspcious dns query from pod ${client_namespace}/${client_name_aggr} for '${qname}'"
+  severity: 100
+  dataSet: dns
+  period: 1m
+  lookback: 5m
+  query: qname NOTIN ${domains} AND client_namespace IN ${namespaces}
+  aggregateBy: [client_namespace, client_name_aggr, qname]
+  substitutions:
+    - name: domains
+      values:
+        - "*cluster.local"
+        - "*ec2.internal"
+        - "*.in-addr.arpa"
+        - "localhost"
+    - name: namespaces
+      values:
+        - "java-app"
+

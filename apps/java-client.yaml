@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: java-client
+  namespace: java-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: java-client
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: java-client
+    spec:
+      containers:
+      - image: locustio/locust
+        imagePullPolicy: Always
+        name: locust
+        command: ["locust"]
+        volumeMounts:
+          - mountPath: /home/locust
+            name: locust-scripts
+        env:
+          - name: LOCUST_HEADLESS
+            value: "true"
+          - name: LOCUST_USERS
+            value: "10"
+          - name: LOCUST_HOST
+            value: "http://java-app.java-app"
+      restartPolicy: Always
+      volumes:
+      - name: locust-scripts
+        configMap:
+          name: scripts-cm
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scripts-cm
+  namespace: java-client
+data:
+  locustfile.py: |
+    from locust import HttpUser, task
+    class HelloWorldUser(HttpUser):
+        def on_start(self):
+            self.client.headers = {'X-Api-Version': '1.0'}
+        @task
+        def hello_world(self):
+            self.client.get("/")

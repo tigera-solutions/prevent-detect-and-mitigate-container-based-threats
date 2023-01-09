@@ -1,0 +1,12 @@
+---
+apiVersion: projectcalico.org/v3
+kind: GlobalThreatFeed
+metadata:
+  name: snort-ip-block-list
+spec:
+  pull:
+    http:
+      url: https://snort.org/downloads/ip-block-list
+  globalNetworkSet:
+    labels:
+      threatfeed: snort

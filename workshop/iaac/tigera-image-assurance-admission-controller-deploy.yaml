@@ -1,0 +1,191 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tigera-image-assurance-admission-controller-certs
+  namespace: tigera-image-assurance
+type: Opaque
+data:
+  tls.crt: BASE64_CERTIFICATE 
+  tls.key: BASE64_KEY
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tigera-secure-container-admission-controller
+  namespace: tigera-image-assurance
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tigera-secure-container-admission-controller
+  namespace: tigera-image-assurance
+rules:
+  - apiGroups:
+      - "containersecurity.tigera.io"
+    resources:
+      - "containeradmissionpolicies"
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - namespaces
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tigera-secure-container-admission-controller
+  namespace: tigera-image-assurance
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tigera-secure-container-admission-controller
+subjects:
+- kind: ServiceAccount
+  name: tigera-secure-container-admission-controller
+  namespace: tigera-image-assurance
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    k8s-app: tigera-image-assurance-admission-controller
+  name: tigera-image-assurance-admission-controller
+  namespace: tigera-image-assurance
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      name: tigera-image-assurance-admission-controller
+  template:
+    metadata:
+      labels:
+        k8s-app: tigera-image-assurance-admission-controller
+        name: tigera-image-assurance-admission-controller
+    spec:
+      serviceAccountName: tigera-secure-container-admission-controller
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - image: quay.io/tigera/image-assurance-admission-controller:v1.2.1
+          imagePullPolicy: IfNotPresent
+          name: tigera-image-assurance-admission-controller
+          env:
+            - name: IMAGE_ASSURANCE_ORGANIZATION_ID
+              valueFrom:
+                configMapKeyRef:
+                  key: organizationID
+                  name: tigera-image-assurance-config
+            - name: IMAGE_ASSURANCE_LOG_LEVEL
+              value: INFO
+            - name: IMAGE_ASSURANCE_BAST_APIURL
+              value: "https://tigera-image-assurance-api.tigera-image-assurance.svc:9443"
+            - name: IMAGE_ASSURANCE_BAST_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  key: token
+                  name: tigera-image-assurance-admission-controller-api-access
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - mountPath: /certs/https/
+              name: certs
+              readOnly: true
+            - mountPath: /certs/bast
+              name: tigera-secure-bast-server-tls
+              readOnly: true
+      imagePullSecrets:
+        - name: tigera-pull-secret
+      volumes:
+        - name: certs
+          secret:
+            defaultMode: 420
+            items:
+              - key: tls.crt
+                path: cert.pem
+              - key: tls.key
+                path: key.pem
+            secretName: tigera-image-assurance-admission-controller-certs
+        - name: tigera-secure-bast-server-tls
+          secret:
+            defaultMode: 420
+            items:
+              - key: tls.crt
+                path: tls.crt
+            secretName: tigera-image-assurance-api-cert
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tigera-image-assurance-admission-controller-service
+  namespace: tigera-image-assurance
+  labels:
+    k8s-app: tigera-image-assurance-admission-controller-service
+spec:
+  selector:
+    k8s-app: tigera-image-assurance-admission-controller
+  ports:
+    - port: 8089
+      targetPort: 8080
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tigera-bast-to-guardian-proxy
+  namespace: tigera-guardian
+spec:
+  selector:
+    k8s-app: tigera-guardian
+  ports:
+    - name: bast
+      port: 9443
+      protocol: TCP
+      targetPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tigera-image-assurance-api
+  namespace: tigera-image-assurance
+spec:
+  externalName: tigera-bast-to-guardian-proxy.tigera-guardian.svc.cluster.local
+  sessionAffinity: None
+  type: ExternalName
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: "image-assurance.tigera.io"
+webhooks:
+  - name: "image-assurance.tigera.io"
+    namespaceSelector:
+      matchExpressions:
+        - key: "tigera-admission-controller"
+          operator: "In"
+          values:
+            - "enforcing"
+    rules:
+      - apiGroups:   ["*"]
+        apiVersions: ["*"]
+        operations:  ["CREATE", "UPDATE"]
+        resources:   ["pods", "replicasets", "deployments", "statefulsets", "daemonsets", "jobs", "cronjobs"]
+        scope:       "Namespaced"
+    clientConfig:
+      service:
+        namespace: "tigera-image-assurance"
+        name: "tigera-image-assurance-admission-controller-service"
+        path: "/admission-review"
+        port: 8089
+      caBundle: "BASE64_CERTIFICATE"
+    admissionReviewVersions: ["v1", "v1beta1"]
+    sideEffects: None
+    timeoutSeconds: 5
