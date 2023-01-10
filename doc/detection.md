@@ -5,6 +5,22 @@
 
 Detect exploitation attempts by evaluating workload traffic against intrusion detection signatures.
 
+Calico Cloud's Kubernetes native deep packet inspection allows us to choose the java-app workload and examine the traffic against Snort signatures.
+
+Take a look.
+
+```
+apiVersion: projectcalico.org/v3
+kind: DeepPacketInspection
+metadata:
+  name: java-app-dpi
+  namespace: java-app
+spec:
+  selector: 'app == "java-app"'
+```
+
+Enable deep packet inspection for the vulnerable java-app workload.
+
 ```
 kubectl apply -f workshop/dpi
 ```
@@ -13,7 +29,7 @@ kubectl apply -f workshop/dpi
 
 Detect the presence of malicious files and processes in compromised workloads.
 
-Turn on Container Threat Detection for your cluster nodes in the Calico Cloud web ui. 
+Turn on Container Threat Detection for your cluster nodes in the Calico Cloud web ui.  Yes, it's really that easy.
 
 ![intro](img/cc-enable-treat-detection.png)
 
