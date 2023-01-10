@@ -33,6 +33,8 @@ Turn on Container Threat Detection for your cluster nodes in the Calico Cloud we
 
 ![intro](img/cc-enable-treat-detection.png)
 
+In order to move quickly during the workshop, we will shorten the time interval for alerts to trigger by setting the period to 1 minute, instead of the default 15 minutes.
+
 ```
 kubectl -n tigera-runtime-security annotate daemonset runtime-reporter unsupported.operator.tigera.io/ignore="true"
 kubectl -n tigera-runtime-security get daemonset.apps/runtime-reporter -o yaml | sed 's/15m/1m/g' | kubectl apply -f -
