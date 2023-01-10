@@ -15,6 +15,8 @@ Detect the presence of malicious files and processes in compromised workloads.
 
 Turn on Container Threat Detection for your cluster nodes in the Calico Cloud web ui. 
 
+![intro](img/cc-enable-treat-detection.png)
+
 ```
 kubectl -n tigera-runtime-security annotate daemonset runtime-reporter unsupported.operator.tigera.io/ignore="true"
 kubectl -n tigera-runtime-security get daemonset.apps/runtime-reporter -o yaml | sed 's/15m/1m/g' | kubectl apply -f -
