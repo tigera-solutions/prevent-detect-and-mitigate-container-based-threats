@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: alpine-helper
+  namespace: attack
+  labels:
+    app: alpine
+spec:
+  containers:
+    - name: alpine
+      image: alpine:3.7
+      command: ["sh", "-c", "tail -f /dev/null"]
+    imagePullPolicy: IfNotPresent
+  restartPolicy: Always

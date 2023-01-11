@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alpine-helper
+  labels:
+    app: alpine-helper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alpine-helper
+  template:
+    metadata:
+      labels:
+        app: alpine-helper
+    spec:
+      containers:
+        - name: alpine
+          image: alpine:3.7
+          command: ["sh", "-c", "tail -f /dev/null"]
