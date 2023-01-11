@@ -5,7 +5,7 @@
 The Workload-centric WAF will detect and block OWASP Top 10 and other attacks, allowing you to continue operating and giving you time to patch the vulnerability.
 
 ```
-kubectl apply -f waf
+kubectl apply -f workshop/waf
 ```
 
 ```
