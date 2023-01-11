@@ -18,5 +18,14 @@ The log4j vulnerability can be exploited to execute malicious code on the affect
 
 We will use this vulnerability to demonstrate how Calico Cloud can be used to prevent, detect, and mitigate the risk of threats that involve containers.
 
+First, deploy the application we will use for the demonstration:
+
+```
+kubectl create -f apps/
+```
+
+This will create several resources for us: an attacker pod we will use to compromise our environment, a Web/LDAP server we will use to download malicious code, and a linux pod to have an availble bash environment to implement an admission controller in one of the workshop's modules. At the same time, two deployments will be created, those represent our main business application, which is constitued from a java web server, and a client which communicate each other through a service listening on port 8080 in our java server app:
+
+![app](img/app.png)
 
 [Next -> Module 4](prevention.md)
