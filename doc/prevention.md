@@ -33,13 +33,14 @@ Before [deploying the admission controller](https://docs.calicocloud.io/image-as
 curl https://installer.calicocloud.io/manifests/v3.14.1-16/manifests/generate-open-ssl-key-cert-pair.sh | bash
 sed -i '' "s/BASE64_CERTIFICATE/$(base64 < admission_controller_cert.pem)/g" workshop/iaac/tigera-image-assurance-admission-controller-deploy.yaml
 sed -i '' "s/BASE64_KEY/$(base64 < admission_controller_key.pem)/g" workshop/iaac/tigera-image-assurance-admission-controller-deploy.yaml
-kubectl apply -f workshop/iaac
+kubectl create -f workshop/iaac
 ```
 
 Let's deploy the workshop applications.
 
 ```
-kubectl apply -f apps
+kubectl replace -f apps
+kubectl create -f apps
 ```
 
 The deployment of the java-app will fail because the Admission Controller policy is preventing the deployment of vulnerable workloads.
