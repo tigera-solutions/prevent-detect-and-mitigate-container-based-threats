@@ -49,7 +49,7 @@ Notice the following error in the output.
 Error from server (Action 'Reject' enforced by ContainerPolicy reject-failed rule index 1): error when creating "apps/java-app.yaml": admission webhook "image-assurance.tigera.io" denied the request: Action 'Reject' enforced by ContainerPolicy reject-failed rule index 1
 ```
 
-The deployment of the java-app will fail because the Admission Controller policy is preventing the deployment of vulnerable workloads.
+The deployment of the `java-app` will fail because the Admission Controller policy is preventing the deployment of vulnerable workloads.
 
 
 ## Vulnerability Management
@@ -60,10 +60,10 @@ Select the image and choose all the Critical and High CVEs.  Click on Bulk Edit 
 
 ![cc](img/cc-add-exception.png)
 
-You should now be able to deploy the vulnerable `java-app` workload.
+After creating exceptions for the vulnerabilities, you should now be able to deploy the vulnerable 'java-app' workload.
 
 ```
-kubectl apply -f apps
+kubectl apply -f apps/java-app.yaml
 ```
 
 
