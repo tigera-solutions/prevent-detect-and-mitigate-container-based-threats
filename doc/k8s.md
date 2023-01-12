@@ -6,7 +6,7 @@ Use any Kubernetes cluster that's compatible with Calico Cloud's [system require
 
 Please refer to the Calico Open Source documentation for instructions on how to [install Calico with Helm](https://projectcalico.docs.tigera.io/getting-started/kubernetes/helm).
 
-#### Managed Kubernetes Shortcuts
+### Managed Kubernetes Shortcuts
 
 ```
 helm repo add projectcalico https://projectcalico.docs.tigera.io/charts
