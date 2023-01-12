@@ -43,6 +43,12 @@ kubectl create -f apps
 kubectl replace -f workshop/felix
 ```
 
+Notice the following error in the output.
+
+```
+Error from server (Action 'Reject' enforced by ContainerPolicy reject-failed rule index 1): error when creating "apps/java-app.yaml": admission webhook "image-assurance.tigera.io" denied the request: Action 'Reject' enforced by ContainerPolicy reject-failed rule index 1
+```
+
 The deployment of the java-app will fail because the Admission Controller policy is preventing the deployment of vulnerable workloads.
 
 
