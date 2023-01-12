@@ -1,6 +1,6 @@
 # Creating a Kubernetes cluster
 
-Please choose a Kubernetes cluster compatible with Calico Cloud's [system requirements](https://docs.calicocloud.io/get-started/requirements/system-requirements).
+Please choose a Kubernetes cluster compatible with the Calico Cloud [system requirements](https://docs.calicocloud.io/get-started/requirements/system-requirements).
 
 ## Install Calico Open Source
 
