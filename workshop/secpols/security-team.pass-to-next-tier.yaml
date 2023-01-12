@@ -1,0 +1,24 @@
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: security-team.pass-to-next-tier
+spec:
+  tier: security-team
+  order: 40
+  selector: all()
+  namespaceSelector: ''
+  serviceAccountSelector: ''
+  ingress:
+    - action: Pass
+      source: {}
+      destination: {}
+  egress:
+    - action: Pass
+      source: {}
+      destination: {}
+  doNotTrack: false
+  applyOnForward: false
+  preDNAT: false
+  types:
+    - Ingress
+    - Egress

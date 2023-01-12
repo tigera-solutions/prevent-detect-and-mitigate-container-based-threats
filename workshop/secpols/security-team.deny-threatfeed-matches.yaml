@@ -1,0 +1,34 @@
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: security-team.deny-threatfeed-matches
+spec:
+  tier: security-team
+  order: 10
+  selector: all()
+  namespaceSelector: ''
+  serviceAccountSelector: ''
+  ingress:
+    - action: Deny
+      source:
+        selector: threatfeed == "snort"
+      destination: {}
+    - action: Deny
+      source:
+        selector: threatfeed == "feodo"
+      destination: {}
+  egress:
+    - action: Deny
+      source: {}
+      destination:
+        selector: threatfeed == "snort"
+    - action: Deny
+      source: {}
+      destination:
+        selector: threatfeed == "feodo"
+  doNotTrack: false
+  applyOnForward: false
+  preDNAT: false
+  types:
+    - Ingress
+    - Egress
