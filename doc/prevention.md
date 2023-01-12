@@ -39,8 +39,8 @@ kubectl create -f workshop/iaac
 Let's deploy the workshop applications.
 
 ```
-kubectl replace -f apps
 kubectl create -f apps
+kubectl replace -f workshop/felix
 ```
 
 The deployment of the java-app will fail because the Admission Controller policy is preventing the deployment of vulnerable workloads.
