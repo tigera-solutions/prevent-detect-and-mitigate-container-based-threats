@@ -39,8 +39,7 @@ kubectl create -f workshop/iaac
 Let's deploy the workshop applications.
 
 ```
-kubectl create -f apps
-kubectl replace -f workshop/felix
+kubectl apply -f apps
 ```
 
 Notice the following error in the output.
@@ -63,7 +62,7 @@ Select the image and choose all the Critical and High CVEs.  Click on Bulk Edit 
 After creating exceptions for the vulnerabilities, you should now be able to deploy the vulnerable 'java-app' workload.
 
 ```
-kubectl apply -f apps/java-app.yaml
+kubectl apply -f apps
 ```
 
 
