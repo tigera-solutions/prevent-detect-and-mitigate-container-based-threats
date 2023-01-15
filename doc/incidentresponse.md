@@ -19,12 +19,15 @@ kubectl label pod -n attack -l app=attack "quarantine=true" --overwrite
 
 ## Evidence Collection
 
-Collect the flow, dns, http, and alert event logs and other relevent evidnce. 
+Collect the flow, DNS, HTTP, alert event logs, and other relevant evidence.
+
+Initiate Packet Capture to record all network traffic in the `attack` namespace.
+
+![ir](img/cc-packet-capture.png)
 
 
 
 **Congratulations! You have finished all the labs in the workshop.**
-
 
 
 >Follow the cleanup instructions on the [main page](https://github.com/tigera-solutions/detect-and-mitigate-container-based-threats#workshop-modules) if needed.
