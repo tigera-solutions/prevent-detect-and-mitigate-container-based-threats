@@ -5,8 +5,17 @@
 Isolating intruder elements by quarantining the source of the attacks.
 
 ```
+kubectl apply -f workshop/secpols
+```
+
+![ir](img/cc-security-team-tier.png)
+
+```
 kubectl label pod -n attack -l app=attack "quarantine=true" --overwrite
 ```
+
+![ir](img/cc-quarantine-attack.png)
+
 
 ## Evidence Collection
 
