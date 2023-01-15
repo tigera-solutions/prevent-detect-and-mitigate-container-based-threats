@@ -58,5 +58,8 @@ kubectl apply -f workshop/alerts
 ```
 
 
+```
+kubectl patch felixconfiguration default --patch-file workshop/felix/felix.yaml
+```
 
 [Next -> Module 6](exploitation.md)
