@@ -42,24 +42,28 @@ kubectl -n tigera-runtime-security get daemonset.apps/runtime-reporter -o yaml |
 
 ## Dynamic Service and Threat Graph
 
-Expose reconnaissance gathering and exploitation attempts. Observe data exfiltration of sensitive information leaving the cluster. 
+Expose reconnaissance gathering, exploitation attempts, and data exfiltration of sensitive information. 
 
-Enable Application layer visibility and turn it on for our vulnerable `java-app`.
+Collect the path and arguments of short-lived processes, low-level TCP logging, Calico Cloud flow, DNS, and application layer logging.
+ 
+```
+kubectl patch felixconfiguration default --patch-file workshop/felix/felix.yaml
+kubectl apply -f workshop/dsg
+```
+
+Enable layer 7 logging for our vulnerable `java-app`.
 
 ```
-kubectl apply -f workshop/dsg
 kubectl annotate svc java-app -n java-app projectcalico.org/l7-logging=true
 ```
 
-Apply Global Alerts to enable signature-based anomaly detection.
+![intro](img/cc-dynamic-service-graph.png)
+
+Setup alerting for suspicious DNS lookups and WAF ruleset matches.
 
 ```
 kubectl apply -f workshop/alerts
 ```
 
-
-```
-kubectl patch felixconfiguration default --patch-file workshop/felix/felix.yaml
-```
 
 [Next -> Module 6](exploitation.md)
