@@ -8,3 +8,4 @@ spec:
   captureRotationSeconds: 3600
   l7LogsFlushInterval: 15s
   l7LogsFileAggregationHTTPHeaderInfo: IncludeL7HTTPHeaderInfo
+  policySyncPathPrefix: /var/run/nodeagent
