@@ -38,7 +38,7 @@ We will guide you through the following Calico Cloud use cases:
 
 ## Workshop Prerequisites
 
-- k8s cluster of your choosing
+- k8s cluster compliant with [system requirements](https://docs.calicocloud.io/get-started/requirements/system-requirements)
 - `Docker`
 - `curl`
 - `kubectl`
