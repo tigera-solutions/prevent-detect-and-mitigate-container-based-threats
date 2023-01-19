@@ -11,6 +11,12 @@ kubectl patch applicationlayer tigera-secure --type='merge' -p '{"spec":{"webApp
 kubectl apply -f workshop/waf
 ```
 
+Enable WAF protection for the `java-app` service.
+
+```
+kubectl annotate svc java-app -n java-app projectcalico.org/l7-logging=true
+```
+
 Malicous requests attempting to exploit the Log4Shell vulnerability will be detected and blocked.
 
 
