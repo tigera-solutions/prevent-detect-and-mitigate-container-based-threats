@@ -62,7 +62,8 @@ Select the image and choose all the Critical and High CVEs.  Click on Bulk Edit 
 After creating exceptions for the vulnerabilities, you should now be able to deploy the vulnerable 'java-app' workload.
 
 ```
-kubectl apply -f apps
+kubectl label namespaces java-app tigera-admission-controller-
+kubectl apply -f apps/java-app
 ```
 
 
