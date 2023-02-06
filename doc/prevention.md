@@ -63,7 +63,7 @@ After creating exceptions for the vulnerabilities, you should now be able to dep
 
 ```
 kubectl label namespaces java-app tigera-admission-controller-
-kubectl apply -f apps/java-app
+kubectl apply -f apps/java-app.yaml
 ```
 
 
