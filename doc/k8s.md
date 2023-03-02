@@ -16,13 +16,13 @@ kubectl create namespace tigera-operator
 Amazon Elastic Kubernetes Service (EKS)
 
 ```
-helm install calico projectcalico/tigera-operator --version v3.23.5 -f misc/values-eks-aws-cni.yaml --namespace tigera-operator
+helm install calico projectcalico/tigera-operator --version v3.24.5 -f misc/values-eks-aws-cni.yaml --namespace tigera-operator
 ```
 
 Microsoft Azure Kubernetes Service (AKS)
 
 ```
-helm install calico projectcalico/tigera-operator --version v3.23.5 -f misc/values-aks-azure-cni.yaml --namespace tigera-operator
+helm install calico projectcalico/tigera-operator --version v3.24.5 -f misc/values-aks-azure-cni.yaml --namespace tigera-operator
 ```
 
 Confirm all the pods are ready
