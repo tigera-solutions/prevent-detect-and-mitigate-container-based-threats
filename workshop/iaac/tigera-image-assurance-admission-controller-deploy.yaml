@@ -137,30 +137,6 @@ spec:
       targetPort: 8080
       protocol: TCP
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: tigera-bast-to-guardian-proxy
-  namespace: tigera-guardian
-spec:
-  selector:
-    k8s-app: tigera-guardian
-  ports:
-    - name: bast
-      port: 9443
-      protocol: TCP
-      targetPort: 8080
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: tigera-image-assurance-api
-  namespace: tigera-image-assurance
-spec:
-  externalName: tigera-bast-to-guardian-proxy.tigera-guardian.svc.cluster.local
-  sessionAffinity: None
-  type: ExternalName
----
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
