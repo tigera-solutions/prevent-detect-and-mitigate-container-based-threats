@@ -1,0 +1,22 @@
+apiVersion: projectcalico.org/v3
+kind: GlobalAlert
+metadata:
+  name: flows.suspicious-connection-initiated-from-process
+spec:
+  description: Generate alerts for all processes initiating network calls not in the process set
+  summary: '[IoC] suspicious connection initiated from process ${process_name} on pod ${source_namespace}/${source_name_aggr}'
+  severity: 100
+  dataSet: flows
+  period: 1m
+  lookback: 1m
+  query: process_name NOTIN ${process_names} AND source_namespace IN ${namespaces}
+  aggregateBy: [source_namespace, source_name_aggr, process_name, process_args]
+  substitutions:
+    - name: namespaces
+      values:
+        - "java-app"
+        - "default"
+    - name: process_names
+      values:
+        - "-"
+        - "/usr/lib/jvm/java-1.8-openjdk/jre/bin/java"
