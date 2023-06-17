@@ -8,7 +8,7 @@ spec:
   severity: 100
   dataSet: dns
   period: 1m
-  lookback: 5m
+  lookback: 1m
   query: qname NOTIN ${domains} AND client_namespace IN ${namespaces}
   aggregateBy: [client_namespace, client_name_aggr, qname]
   substitutions:
