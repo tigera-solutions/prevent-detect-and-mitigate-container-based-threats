@@ -1,0 +1,30 @@
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: security-team.quarantine-namespaces
+spec:
+  tier: security-team
+  order: 30
+  selector: ''
+  namespaceSelector: quarantine == "true"
+  serviceAccountSelector: ''
+  ingress:
+    - action: Log
+      source: {}
+      destination: {}
+    - action: Deny
+      source: {}
+      destination: {}
+  egress:
+    - action: Log
+      source: {}
+      destination: {}
+    - action: Deny
+      source: {}
+      destination: {}
+  doNotTrack: false
+  applyOnForward: false
+  preDNAT: false
+  types:
+    - Ingress
+    - Egress
