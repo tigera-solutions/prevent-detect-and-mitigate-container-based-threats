@@ -3520,16 +3520,15 @@ data:
     -- Debug log configuration -------------------------------------------------\n\n#
     The default debug log configuration is to duplicate the error, warning\n# and
     notice messages from the error log.\n#\n#SecDebugLog /opt/modsecurity/var/log/debug.log\n#SecDebugLogLevel
-    3\nSecDebugLog /tmp/modsecurity_debug.log\nSecDebugLogLevel 9\n\n\n# -- Audit
-    log configuration -------------------------------------------------\n\n# Log the
-    transactions that are marked by a rule, as well as those that\n# trigger a server
-    error (determined by a 5xx or 4xx, excluding 404,  \n# level response status codes).\n#\nSecAuditEngine
-    RelevantOnly\nSecAuditLogRelevantStatus \"^(?:5|4(?!04))\"\n\n# Log everything
-    we know about a transaction.\nSecAuditLogParts ABIJDEFHZ\n\n# Use a single file
-    for logging. This is much easier to look at, but\n# assumes that you will use
-    the audit log only ocassionally.\n#\nSecAuditLogType Serial\nSecAuditLog /tmp/modsec_audit.log\n\n#
-    Specify the path for concurrent audit logging.\n#SecAuditLogStorageDir /opt/modsecurity/var/audit/\n\n\n#
-    -- Miscellaneous -----------------------------------------------------------\n\n#
+    3\n\n\n# -- Audit log configuration -------------------------------------------------\n\n#
+    Log the transactions that are marked by a rule, as well as those that\n# trigger
+    a server error (determined by a 5xx or 4xx, excluding 404,  \n# level response
+    status codes).\n#\nSecAuditEngine RelevantOnly\nSecAuditLogRelevantStatus \"^(?:5|4(?!04))\"\n\n#
+    Log everything we know about a transaction.\nSecAuditLogParts ABIJDEFHZ\n\n# Use
+    a single file for logging. This is much easier to look at, but\n# assumes that
+    you will use the audit log only ocassionally.\n#\nSecAuditLogType Serial\nSecAuditLog
+    /tmp/modsec_audit.log\n\n# Specify the path for concurrent audit logging.\n#SecAuditLogStorageDir
+    /opt/modsecurity/var/audit/\n\n\n# -- Miscellaneous -----------------------------------------------------------\n\n#
     Use the most commonly used application/x-www-form-urlencoded parameter\n# separator.
     There's probably only one application somewhere that uses\n# something else so
     don't expect to change this value.\n#\nSecArgumentSeparator &\n\n# Settle on version
