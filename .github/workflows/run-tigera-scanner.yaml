@@ -14,7 +14,7 @@ jobs:
         docker build -t localhost:5000/log4shell-vulnerable-app:latest https://github.com/christophetd/log4shell-vulnerable-app.git#main
     - name: Install Tigera Scanner
       run: |
-        curl -Lo tigera-scanner https://installer.calicocloud.io/tigera-scanner/v3.16.1-11/image-assurance-scanner-cli-linux-amd64
+        curl -Lo tigera-scanner https://installer.calicocloud.io/tigera-scanner/v3.19.0-1.0-7/image-assurance-scanner-cli-linux-amd64
         chmod +x tigera-scanner
         ./tigera-scanner version
     - name: Scan Image
