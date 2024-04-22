@@ -15,8 +15,10 @@ spec:
     - name: namespaces
       values:
         - "java-app"
-        - "default"
+        - "testing"
     - name: process_names
       values:
         - "-"
         - "/usr/lib/jvm/java-1.8-openjdk/jre/bin/java"
+        - "/metrics-server"
+        - "/apiserver"
